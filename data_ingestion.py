@@ -119,11 +119,11 @@ def resample_to_common(ic):
             scale=TARGET_SCALE_M
         )
 
-    return ic.map(_resample)
+    return ic.map(_resample) 
 
 
 # ══════════════════════════════════════════════════════════
-# 1.4  Load ALL products
+# 1.4  Load ALL productss
 # ══════════════════════════════════════════════════════════
 
 print("Loading and harmonising products …")
