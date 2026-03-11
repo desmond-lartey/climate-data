@@ -108,16 +108,7 @@ PRODUCTS = {
         "native_res_deg": 0.1,
     },
 
-    # ERA5 atmospheric reanalysis
-    "ERA5": {
-        "collection": "ECMWF/ERA5/DAILY",
-        "band":       "total_precipitation",
-        "scale_factor": 1000.0,    # meters → mm
-        "units":      "mm/day",
-        "type":       "reanalysis",
-        "temporal":   "daily",
-        "native_res_deg": 0.25,
-    },
+
 
     # MERRA-2 precipitation
     "MERRA2": {
@@ -131,15 +122,7 @@ PRODUCTS = {
     },
 
     # ── Gauge-based reference ─────────────────────────────
-    "GPCC_MONTHLY": {
-        "collection": "NASA/GPCC/Full_V7",
-        "band":       "precip",
-        "scale_factor": 1.0,
-        "units":      "mm/day",
-        "type":       "gauge",
-        "temporal":   "monthly",
-        "native_res_deg": 1.0,
-    },
+
 
 }
 
