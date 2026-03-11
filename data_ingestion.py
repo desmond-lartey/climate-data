@@ -44,27 +44,42 @@ def load_product(name: str, roi: ee.Geometry,
                  start: str, end: str) -> ee.ImageCollection:
     """
     Load a GEE collection, select the precip band,
-    apply scale factor, clip to ROI, and tag with metadata.
+    clip to ROI early (to reduce memory),
+    convert units to mm/day, and tag metadata.
     Returns an ImageCollection with band 'precip_mm_day'.
     """
+
     p = PRODUCTS[name]
+
     raw = (ee.ImageCollection(p["collection"])
              .filterDate(start, end)
              .filterBounds(roi)
-             .select([p["band"]]))
+             .select(p["band"]))   # safer than [p["band"]]
 
     def harmonise(img):
-        # Convert to mm/day
-        scaled = img.multiply(p["scale_factor"]).rename("precip_mm_day")
-        # For GPM (30-min intervals, units mm/hr) → mm/day = value × 24
+
+        img = ee.Image(img)
+
+        # ── Clip EARLY to reduce computation load ──
+        img = img.clip(roi)
+
+        # ── Convert to mm/day ──
+        scaled = img.multiply(p["scale_factor"])
+
+        # IMERG precipitation is mm/hr → convert to mm/day
         if name == "GPM_IMERG":
             scaled = scaled.multiply(24)
-        # Mask negatives
+
+        scaled = scaled.rename("precip_mm_day")
+
+        # ── Remove negative values ──
         scaled = scaled.updateMask(scaled.gte(0))
+
+        # ── Preserve metadata ──
         return (scaled
                 .copyProperties(img, ["system:time_start", "system:time_end"])
                 .set("product", name)
-                .set("type",    p["type"]))
+                .set("type", p["type"]))
 
     return raw.map(harmonise)
 
@@ -90,12 +105,22 @@ def aggregate_monthly(ic: ee.ImageCollection, product_name: str):
         start = date
         end   = date.advance(1, "month")
 
-        img = (ic.filterDate(start, end)
-                 .sum()
-                 .rename("precip_mm_month")
-                 .set("system:time_start", start.millis())
-                 .set("year", start.get("year"))
-                 .set("month", start.get("month")))
+        month_ic = ic.filterDate(start, end)
+
+        # prevent empty months
+        img = ee.Algorithms.If(
+            month_ic.size().gt(0),
+            month_ic.sum(),
+            ee.Image.constant(0)
+        )
+
+        img = ee.Image(img).rename("precip_mm_month")
+
+        img = img.set({
+            "system:time_start": start.millis(),
+            "year": start.get("year"),
+            "month": start.get("month")
+        })
 
         return img
 
@@ -175,7 +200,7 @@ def preview_products(year: int = 2010, month: int = 6,
 
 
 # ══════════════════════════════════════════════════════════
-# 1.6  Export monthly mean climatologies to Google Drive
+# 1.6  Export monthly climatologies to Google Drive
 # ══════════════════════════════════════════════════════════
 
 def export_climatology(product_name: str,
@@ -184,48 +209,85 @@ def export_climatology(product_name: str,
     Compute long-term monthly climatology (12 images × 1 mean each)
     and export to Google Drive as a multi-band GeoTIFF.
     """
-    ic     = COLLECTIONS[product_name]
+
+    ic = COLLECTIONS[product_name]
+
+    # check if collection has images
+    size = ic.size().getInfo()
+
+    if size == 0:
+        print(f"⚠ Skipping {product_name} (no images in collection)")
+        return None
+
     months = ee.List.sequence(1, 12)
 
     def monthly_clim(m):
-        m   = ee.Number(m).toInt()
+
+        m = ee.Number(m)
+
         img = (ic.filter(ee.Filter.eq("month", m))
-                 .mean()
-                 .rename(ee.String("month_").cat(m.format())))
-        return img
+                 .mean())
+
+        # ensure band exists
+        img = ee.Image(img)
+
+        return img.rename(
+            ee.String("month_").cat(m.format())
+        )
 
     clim_imgs = ee.ImageCollection(months.map(monthly_clim))
-    clim_img  = clim_imgs.toBands().clip(ROI)
+
+    clim_img = clim_imgs.toBands().clip(ROI)
 
     task = ee.batch.Export.image.toDrive(
-        image       = clim_img,
+        image = clim_img,
         description = f"Climatology_{product_name}",
-        folder      = drive_folder,
+        folder = drive_folder,
         fileNamePrefix = f"climatology_{product_name}",
-        region      = ROI,
-        scale       = TARGET_SCALE_M,
-        crs         = "EPSG:4326",
-        maxPixels   = 1e13,
+        region = ROI,
+        scale = TARGET_SCALE_M,
+        crs = "EPSG:4326",
+        maxPixels = 1e13
     )
+
     task.start()
-    print(f"  ↗ Export started : Climatology_{product_name} → Drive/{drive_folder}/")
+
+    print(f"↗ Export started: {product_name}")
+
     return task
 
 
+# ══════════════════════════════════════════════════════════
+# Run exports
+# ══════════════════════════════════════════════════════════
+
 if __name__ == "__main__":
 
-    # Export climatologies for all products except GPCC
     tasks = {}
+
+    # products already completed
+    completed_products = [
+        "CHIRPS",
+        "PERSIANN_CDR",
+        "ERA5"
+    ]
 
     for pname in PRODUCTS:
 
         if pname == "GPCC_MONTHLY":
-            print("Skipping GPCC export (not available in GEE)")
+            print("Skipping GPCC (not available in GEE)")
+            continue
+
+        if pname in completed_products:
+            print(f"Skipping {pname} (already exported)")
             continue
 
         print(f"Starting export for {pname}")
 
-        tasks[pname] = export_climatology(pname)
+        task = export_climatology(pname)
+
+        if task:
+            tasks[pname] = task
 
     print(f"\n{len(tasks)} export tasks submitted.")
     print("Monitor progress at:")

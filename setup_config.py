@@ -33,7 +33,7 @@ CONFIG = {
 
     # ── Study period ──────────────────────────────────────
     "start_date": "2000-01-01",
-    "end_date":   "2026-01-01",
+    "end_date":   "2021-01-01",
 
     # ── Region of interest ───────────────────────────────
     # Earth Engine asset containing the West Africa boundary
