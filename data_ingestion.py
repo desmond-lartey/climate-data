@@ -65,7 +65,7 @@ def build_roi() -> ee.Geometry:
     """Load ROI from GEE asset and dissolve to single geometry."""
     fc  = ee.FeatureCollection(CONFIG["roi_asset"])
     roi = fc.geometry().dissolve(maxError=1)
-    print(f" ROI loaded: {CONFIG['roi_asset']}")
+    print(f"✅ ROI loaded: {CONFIG['roi_asset']}")
     return roi
 
 ROI = build_roi()
@@ -148,6 +148,77 @@ def _harmonise(img: ee.Image, name: str) -> ee.Image:
 # § 4  CORE PIPELINE FUNCTIONS
 # ════════════════════════════════════════════════════════════
 
+
+def _load_merra2_daily(roi: ee.Geometry,
+                       start: str, end: str) -> ee.ImageCollection:
+    """
+    MERRA-2 special loader — pre-aggregates 24 hourly images → 1 daily
+    image BEFORE monthly aggregation.
+
+    WHY THIS IS NECESSARY
+    ─────────────────────
+    MERRA-2 is 1-HOURLY (~175,000 images over 20 years). Passing the raw
+    hourly IC through aggregate_to_monthly() forces GEE to process all
+    175,000 images per spatial operation — confirmed to cause:
+      • "User memory limit exceeded" on interactive quota
+      • 12h compute timeout on batch export tasks
+    Pre-aggregating to daily (~7,300 images) keeps the collection the
+    same order of magnitude as CHIRPS and resolves both errors.
+
+    NUMERICAL EQUIVALENCE
+    ──────────────────────
+    mean(24 hourly kg/m²/s) × 86400 = mean daily mm/day
+    Identical result to per-image scale_factor application, just in a
+    memory-safe order.
+    """
+    p   = PRODUCTS["MERRA2"]
+    eff_start, eff_end = get_product_window("MERRA2")
+    req_start = max(start, eff_start)
+    req_end   = min(end,   eff_end)
+
+    if req_start >= req_end:
+        print("  ⚠  MERRA2: no overlap in requested window")
+        return ee.ImageCollection([])
+
+    raw = (ee.ImageCollection(p["collection"])
+             .filterDate(req_start, req_end)
+             .filterBounds(roi)
+             .select([p["band"]]))   # PRECTOTCORR in kg/m²/s
+
+    n_days  = ee.Date(req_end).difference(ee.Date(req_start), "day").round()
+    offsets = ee.List.sequence(0, n_days.subtract(1))
+
+    def make_daily(offset):
+        offset   = ee.Number(offset).toInt()
+        date     = ee.Date(req_start).advance(offset, "day")
+        date_end = date.advance(1, "day")
+
+        daily = (raw.filterDate(date, date_end)
+                    .mean()              # mean of 24 hourly values (kg/m²/s)
+                    .multiply(86400)     # → mm/day
+                    .rename("precip_mm_day")
+                    .toFloat()
+                    .clip(roi))
+
+        empty = (ee.Image.constant(0)
+                   .rename("precip_mm_day")
+                   .toFloat()
+                   .updateMask(ee.Image.constant(0)))
+
+        out = ee.Image(ee.Algorithms.If(
+            raw.filterDate(date, date_end).size().gt(0),
+            daily, empty
+        ))
+        return (out.updateMask(out.gte(0))
+                   .set("system:time_start", date.millis(),
+                        "system:time_end",   date_end.millis(),
+                        "product",           "MERRA2",
+                        "source_type",       p["type"]))
+
+    print(f"  • MERRA2: daily pre-aggregation ({req_start} → {req_end})")
+    return ee.ImageCollection(offsets.map(make_daily))
+
+
 def load_product(name: str, roi: ee.Geometry,
                  start: str, end: str) -> ee.ImageCollection:
     """
@@ -158,6 +229,12 @@ def load_product(name: str, roi: ee.Geometry,
     products — they are set after monthly aggregation.
     For already-monthly products they are set here.
     """
+    # ── MERRA-2 special path ────────────────────────────────────────────
+    # Route MERRA-2 through hourly→daily pre-aggregation before
+    # harmonisation. Avoids 12h export timeout and memory limit errors.
+    if name == "MERRA2":
+        return _load_merra2_daily(roi, start, end)
+
     p = PRODUCTS[name]
 
     # Clip date range to product availability
@@ -368,7 +445,7 @@ def _generate_demo_obs(stations_df: pd.DataFrame,
 
 OBS_DF = _generate_demo_obs(STATIONS_DF, START_YEAR, END_YEAR)
 
-print(f" Stations loaded  : {len(STATIONS_DF)} "
+print(f"📍 Stations loaded  : {len(STATIONS_DF)} "
       f"({'demo' if STATIONS_DF.source.eq('demo').all() else 'real'})")
 print(f"📋 Observations     : {len(OBS_DF):,} rows  "
       f"({START_YEAR}–{END_YEAR})")
@@ -418,8 +495,8 @@ def load_stations_from_csv(stations_csv: str,
     obs_df["month"]      = obs_df["month"].astype(int)
     obs_df["obs_mm_day"] = obs_df["obs_mm_day"].astype(float)
 
-    print(f" Real stations loaded : {len(stations_df)}")
-    print(f" Real obs loaded      : {len(obs_df):,} rows")
+    print(f"✅ Real stations loaded : {len(stations_df)}")
+    print(f"✅ Real obs loaded      : {len(obs_df):,} rows")
     return stations_df, obs_df
 
 
@@ -472,7 +549,7 @@ for pname in PRODUCTS:
     except Exception as exc:
         print(f"    ❌ Failed to build {pname}: {exc}")
 
-print(f"\n Collections built: {list(COLLECTIONS.keys())}")
+print(f"\n✅ Collections built: {list(COLLECTIONS.keys())}")
 
 
 # ════════════════════════════════════════════════════════════
@@ -508,16 +585,27 @@ def export_climatology_to_drive(product_name: str,
 
     def month_clim(m):
         m   = ee.Number(m).toInt()
-        img = (ic.filter(ee.Filter.calendarRange(m, m, "month"))
-                 .select("precip_mm_day")
-                 .mean()
-                 .rename(ee.String("month_").cat(m.format())))
-        return img
+        # Zero-pad so month_01..month_12 — valid GEE asset band IDs.
+        # toBands() would prepend image index ("0_month_1") making them
+        # invalid. We fix this by renaming the whole stack after toBands().
+        return (ic.filter(ee.Filter.calendarRange(m, m, "month"))
+                  .select("precip_mm_day")
+                  .mean()
+                  .rename(ee.String("month_").cat(m.format())))
 
-    clim_12band = (ee.ImageCollection(ee.List.sequence(1, 12).map(month_clim))
-                     .toBands()
-                     .toFloat()
-                     .clip(ROI))
+    # toBands() stacks correctly but prefixes each band with its index
+    # ("0_month_1", "1_month_2" …) which are INVALID GEE asset band IDs
+    # (must start with a letter). Rename to month_01 … month_12 explicitly.
+    raw_stack   = ee.ImageCollection(
+                    ee.List.sequence(1, 12).map(month_clim)).toBands()
+    valid_names = ee.List.sequence(1, 12).map(lambda m: ee.String("month_").cat(
+        ee.Algorithms.If(
+            ee.Number(m).lt(10),
+            ee.String("0").cat(ee.Number(m).int().format()),
+            ee.Number(m).int().format()
+        )
+    ))
+    clim_12band = raw_stack.rename(valid_names).toFloat().clip(ROI)
 
     task = ee.batch.Export.image.toDrive(
         image          = clim_12band,
@@ -548,16 +636,27 @@ def export_climatology_to_asset(product_name: str) -> ee.batch.Task:
 
     def month_clim(m):
         m   = ee.Number(m).toInt()
-        img = (ic.filter(ee.Filter.calendarRange(m, m, "month"))
-                 .select("precip_mm_day")
-                 .mean()
-                 .rename(ee.String("month_").cat(m.format())))
-        return img
+        # Zero-pad so month_01..month_12 — valid GEE asset band IDs.
+        # toBands() would prepend image index ("0_month_1") making them
+        # invalid. We fix this by renaming the whole stack after toBands().
+        return (ic.filter(ee.Filter.calendarRange(m, m, "month"))
+                  .select("precip_mm_day")
+                  .mean()
+                  .rename(ee.String("month_").cat(m.format())))
 
-    clim_12band = (ee.ImageCollection(ee.List.sequence(1, 12).map(month_clim))
-                     .toBands()
-                     .toFloat()
-                     .clip(ROI))
+    # toBands() stacks correctly but prefixes each band with its index
+    # ("0_month_1", "1_month_2" …) which are INVALID GEE asset band IDs
+    # (must start with a letter). Rename to month_01 … month_12 explicitly.
+    raw_stack   = ee.ImageCollection(
+                    ee.List.sequence(1, 12).map(month_clim)).toBands()
+    valid_names = ee.List.sequence(1, 12).map(lambda m: ee.String("month_").cat(
+        ee.Algorithms.If(
+            ee.Number(m).lt(10),
+            ee.String("0").cat(ee.Number(m).int().format()),
+            ee.Number(m).int().format()
+        )
+    ))
+    clim_12band = raw_stack.rename(valid_names).toFloat().clip(ROI)
 
     task = ee.batch.Export.image.toAsset(
         image       = clim_12band,
@@ -588,7 +687,7 @@ def load_climatology_asset(product_name: str) -> ee.Image:
         img = ee.Image(asset_id)
         # Trigger a lightweight server call to check existence
         img.bandNames().getInfo()
-        print(f"   Asset loaded: {asset_id}")
+        print(f"  ✅ Asset loaded: {asset_id}")
         return img
     except Exception:
         print(f"  ⚠  Asset not found: {asset_id}")
