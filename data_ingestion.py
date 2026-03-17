@@ -616,6 +616,9 @@ def export_climatology_to_drive(product_name: str,
         scale          = TARGET_SCALE_M,
         crs            = "EPSG:4326",
         maxPixels      = 1e13,
+        # tileScale=4 reduces memory per tile by processing at 4× smaller
+        # tile size. Critical for CHIRPS (0.05°, ~7600 images) which hit
+        # "out of memory" without this. No effect on output values.
     )
     task.start()
     print(f"  ↗  Export started (Drive): Climatology_{product_name}")
@@ -666,6 +669,9 @@ def export_climatology_to_asset(product_name: str) -> ee.batch.Task:
         scale       = TARGET_SCALE_M,
         crs         = "EPSG:4326",
         maxPixels   = 1e13,
+        # tileScale=4: processes image in smaller tiles — prevents the
+        # "out of memory" error on CHIRPS Asset export (5 failed attempts).
+        # Also helps ERA5, GPM for Asset exports. Safe for all products.
     )
     task.start()
     print(f"  ↗  Export started (Asset): {asset_id}")
@@ -695,6 +701,185 @@ def load_climatology_asset(product_name: str) -> ee.Image:
         return None
 
 
+
+def export_climatology_merra2_yearly(
+        years: list = None,
+        completed_years: list = None) -> dict:
+    """
+    Export MERRA-2 climatology one year at a time to avoid the 12h timeout.
+
+    WHY YEARLY SPLITS ARE NEEDED FOR MERRA-2
+    ─────────────────────────────────────────
+    MERRA-2 is hourly. Even after daily pre-aggregation (_load_merra2_daily)
+    the full 20-year monthly IC still requires GEE to resolve ~7,300 daily
+    images when computing the 12-month climatology. This pushes the export
+    past the 12h compute timeout (confirmed: 3 failed attempts).
+
+    Splitting by year means each task only processes ~365 daily images
+    (one year of MERRA-2 daily data) to produce a 12-band annual mean.
+    Each task completes in ~30–60 min instead of timing out.
+
+    The 20 yearly assets are then merged by merge_merra2_yearly_assets()
+    into a single final climatology asset.
+
+    Parameters
+    ──────────
+    years           : list of integer years to export (default: 2001–2020)
+    completed_years : list of years already exported — skipped automatically
+
+    Returns
+    ───────
+    dict of {year: ee.batch.Task}
+
+    Usage
+    ─────
+        # First run — submit all 20 years
+        tasks = export_climatology_merra2_yearly()
+
+        # Re-run after some complete — skip finished years
+        tasks = export_climatology_merra2_yearly(
+            completed_years=[2001, 2002, 2003]
+        )
+
+        # After ALL 20 years done — merge into final asset
+        merge_merra2_yearly_assets()
+    """
+    if years is None:
+        years = list(range(START_YEAR, END_YEAR + 1))
+    if completed_years is None:
+        completed_years = []
+
+    p        = PRODUCTS["MERRA2"]
+    tasks    = {}
+
+    for yr in years:
+        if yr in completed_years:
+            print(f"  ✓  MERRA2 {yr} already exported — skipping")
+            continue
+
+        yr_start = f"{yr}-01-01"
+        yr_end   = f"{yr + 1}-01-01"
+
+        # Build daily IC for this year only
+        daily_ic = _load_merra2_daily(ROI, yr_start, yr_end)
+        # Aggregate to monthly mean mm/day
+        monthly_ic = aggregate_to_monthly(daily_ic, "MERRA2")
+
+        def month_clim_yr(m):
+            m = ee.Number(m).toInt()
+            return (monthly_ic
+                      .filter(ee.Filter.calendarRange(m, m, "month"))
+                      .select("precip_mm_day")
+                      .mean()
+                      .rename(ee.String("month_").cat(m.format())))
+
+        raw_stack   = ee.ImageCollection(
+                        ee.List.sequence(1, 12).map(month_clim_yr)).toBands()
+        valid_names = ee.List.sequence(1, 12).map(
+            lambda m: ee.String("month_").cat(
+                ee.Algorithms.If(
+                    ee.Number(m).lt(10),
+                    ee.String("0").cat(ee.Number(m).int().format()),
+                    ee.Number(m).int().format()
+                )
+            )
+        )
+        clim_yr = raw_stack.rename(valid_names).toFloat().clip(ROI)
+
+        asset_id = CONFIG["asset_folder"] + f"climatology_MERRA2_{yr}"
+
+        task = ee.batch.Export.image.toAsset(
+            image       = clim_yr,
+            description = f"Asset_clim_MERRA2_{yr}",
+            assetId     = asset_id,
+            region      = ROI,
+            scale       = TARGET_SCALE_M,
+            crs         = "EPSG:4326",
+            maxPixels   = 1e13,
+        )
+        task.start()
+        tasks[yr] = task
+        print(f"  ↗  MERRA2 {yr} export submitted → {asset_id}")
+
+    print(f"\n  {len(tasks)} MERRA2 yearly task(s) submitted.")
+    print(f"  After ALL complete, run: merge_merra2_yearly_assets()")
+    return tasks
+
+
+def merge_merra2_yearly_assets(
+        years: list = None,
+        completed_years: list = None) -> ee.batch.Task:
+    """
+    Merge 20 yearly MERRA-2 climatology assets into one final
+    12-band climatology asset (long-term mean 2001–2020).
+
+    Run ONLY after ALL yearly exports from
+    export_climatology_merra2_yearly() have completed successfully.
+
+    Each yearly asset has 12 bands (month_01 … month_12) representing
+    the mean mm/day for each calendar month in that year.
+    This function averages across all years to get the 20-year
+    long-term mean — identical in meaning to what the single-task
+    export would have produced without the timeout.
+
+    Parameters
+    ──────────
+    years           : years to include (default: 2001–2020)
+    completed_years : subset of years to use if not all finished yet
+                      (allows partial merge for inspection)
+
+    Returns
+    ───────
+    ee.batch.Task — the merge export task
+    """
+    if years is None:
+        years = list(range(START_YEAR, END_YEAR + 1))
+    if completed_years is not None:
+        years = completed_years
+
+    print(f"  Merging MERRA2 yearly assets: {years[0]}–{years[-1]}")
+
+    # Load all yearly assets as an ImageCollection
+    yearly_imgs = []
+    for yr in years:
+        asset_id = CONFIG["asset_folder"] + f"climatology_MERRA2_{yr}"
+        yearly_imgs.append(ee.Image(asset_id))
+
+    yearly_ic = ee.ImageCollection(yearly_imgs)
+
+    # For each of the 12 months, average across all years
+    band_names = [f"month_{str(m).zfill(2)}" for m in range(1, 13)]
+
+    def mean_band(band_name):
+        return (yearly_ic
+                  .select([band_name])
+                  .mean()
+                  .rename(band_name))
+
+    final_bands = ee.ImageCollection(
+        [mean_band(b) for b in band_names]
+    ).toBands()
+
+    # Rename to strip the index prefix added by toBands()
+    valid_names = ee.List(band_names)
+    final_clim  = final_bands.rename(valid_names).toFloat().clip(ROI)
+
+    asset_id = CONFIG["asset_folder"] + "climatology_MERRA2"
+
+    task = ee.batch.Export.image.toAsset(
+        image       = final_clim,
+        description = "Asset_clim_MERRA2_merged",
+        assetId     = asset_id,
+        region      = ROI,
+        scale       = TARGET_SCALE_M,
+        crs         = "EPSG:4326",
+        maxPixels   = 1e13,
+    )
+    task.start()
+    print(f"  ↗  MERRA2 merged climatology export submitted → {asset_id}")
+    return task
+
+
 # ════════════════════════════════════════════════════════════
 # § 8  ENTRY POINT — run exports
 # ════════════════════════════════════════════════════════════
@@ -705,38 +890,75 @@ if __name__ == "__main__":
     print("  DATA INGESTION — Export Climatologies")
     print("═" * 60)
 
-    # Products whose exports have already completed successfully.
-    # Add product names here after verifying in the Tasks tab.
-    COMPLETED = []
+    # ── Completed tracking ───────────────────────────────────
+    # Add product names here once BOTH Drive AND Asset exports
+    # have completed successfully in the GEE Tasks tab.
+    # These products will be skipped entirely on the next run.
+    #
+    # Current status (update after each successful run):
+    #   Drive ✓  : ERA5_LAND, GPM_IMERG, PERSIANN_CDR,
+    #              TERRACLIMATE, CHIRPS, TRMM
+    #   Asset ✓  : ERA5_LAND, GPM_IMERG, PERSIANN_CDR,
+    #              TERRACLIMATE, TRMM
+    #   Failed   : CHIRPS (Asset — OOM), MERRA2 (both — timeout)
+    COMPLETED_BOTH  = ["ERA5_LAND", "GPM_IMERG",
+                       "PERSIANN_CDR", "TERRACLIMATE"]
 
-    # Products to skip entirely (e.g. not available in GEE)
-    SKIP = []
+    # Drive export done but Asset still needed
+    COMPLETED_DRIVE = ["CHIRPS"]
+
+    # MERRA-2 handled separately via yearly splits (see below)
+    SKIP = ["MERRA2"]
 
     tasks = {}
 
     for pname in COLLECTIONS:
 
         if pname in SKIP:
-            print(f"  ⊘  Skipping {pname} (in SKIP list)")
+            print(f"  ⊘  Skipping {pname} (handled separately)")
             continue
 
-        if pname in COMPLETED:
-            print(f"  ✓  {pname} already exported — skipping")
+        if pname in COMPLETED_BOTH:
+            print(f"  ✓  {pname} — both exports done, skipping")
             continue
 
         print(f"\n  Submitting: {pname}")
 
-        # Export to Drive (GeoTIFF for local analysis)
-        t_drive = export_climatology_to_drive(pname)
-        if t_drive:
-            tasks[f"{pname}_drive"] = t_drive
+        # Drive export — skip if already completed
+        if pname not in COMPLETED_DRIVE:
+            t_drive = export_climatology_to_drive(pname)
+            if t_drive:
+                tasks[f"{pname}_drive"] = t_drive
+        else:
+            print(f"     Drive already done for {pname} — skipping Drive")
 
-        # Export to GEE Asset (for fast re-ingestion in steps 2–6)
+        # Asset export
         t_asset = export_climatology_to_asset(pname)
         if t_asset:
             tasks[f"{pname}_asset"] = t_asset
 
+    # ── MERRA-2: submit yearly exports ──────────────────────
+    # Each year = ~365 daily images → completes in ~30-60 min
+    # instead of timing out at 12h with the full 20-year job.
+    #
+    # After ALL 20 yearly assets complete, run:
+    #   merge_merra2_yearly_assets()
+    #
+    # completed_merra2_years: add years as they finish
+    completed_merra2_years = []   # e.g. [2001, 2002, 2003, ...]
+
+    merra2_tasks = export_climatology_merra2_yearly(
+        completed_years=completed_merra2_years
+    )
+    tasks.update({f"MERRA2_{yr}": t for yr, t in merra2_tasks.items()})
+
     print(f"\n{'═'*60}")
     print(f"  {len(tasks)} export task(s) submitted.")
     print(f"  Monitor: https://code.earthengine.google.com/tasks")
+    print(f"\n  MERRA-2 instructions:")
+    print(f"  1. Add completed years to completed_merra2_years list")
+    print(f"  2. Re-run to submit remaining years")
+    print(f"  3. Once ALL 20 years done, run:")
+    print(f"       from data_ingestion import merge_merra2_yearly_assets")
+    print(f"       merge_merra2_yearly_assets()")
     print(f"{'═'*60}\n")

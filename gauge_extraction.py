@@ -177,7 +177,7 @@ def load_gpcc_from_nc(nc_path: str,
             })
 
     df = pd.DataFrame(records)
-    print(f" GPCC extracted: {len(df):,} records "
+    print(f"✅ GPCC extracted: {len(df):,} records "
           f"for {len(stations_df)} stations")
     return df
 
@@ -186,107 +186,131 @@ def load_gpcc_from_nc(nc_path: str,
 # § 3  EXTRACT GRIDDED PRODUCT VALUES AT STATION LOCATIONS
 # ════════════════════════════════════════════════════════════
 
-def extract_all_products(station_fc:    ee.FeatureCollection,
-                          products:      list = None,
-                          drive_folder:  str  = None) -> ee.batch.Task:
+def extract_product(station_fc:   ee.FeatureCollection,
+                     product_name:  str,
+                     drive_folder:  str = None) -> ee.batch.Task:
     """
-    Sample each product's monthly ImageCollection at every station
-    point and export the full time-series as a CSV to Google Drive.
+    Sample ONE product's monthly ImageCollection at every station
+    point and export as a single CSV to Google Drive.
 
-    Extraction method
-    ─────────────────
-    Uses ee.Reducer.first() on a point geometry.
-    A 5 km buffer is NOT used because at 0.25° (27,830 m) a 5 km
-    circle is entirely sub-pixel and reduceRegions with .mean()
-    over a sub-pixel area is equivalent to a point sample while
-    adding unnecessary geometry computation overhead.
+    WHY ONE TASK PER PRODUCT
+    ────────────────────────
+    The previous single-task approach merged all 7 products into
+    one FeatureCollection before export:
+      7 products × 240 months × 15 stations = 25,200 features
+    This consumed 58,677 EECU-seconds and timed out at 12h.
 
-    Output CSV columns
-    ──────────────────
-    station_id, product, year, month, precip_mm_day
+    Splitting by product means each task handles only:
+      1 product × 240 months × 15 stations = 3,600 features
+    Expected runtime: 30–90 min per product (7 tasks run in parallel).
+
+    Output CSV: precip_extraction_<PRODUCT_NAME>.csv
+    Columns   : station_id, product, year, month, precip_mm_day
+    """
+    folder = drive_folder or CONFIG["drive_folder"]
+    ic     = COLLECTIONS[product_name]
+
+    # Capture product_name in closure explicitly — avoids the common
+    # Python loop-closure bug where all lambdas capture the final value
+    pname = product_name
+
+    def sample_image(img):
+        yr  = img.get("year")
+        mo  = img.get("month")
+        samples = img.select("precip_mm_day").reduceRegions(
+            collection = station_fc,
+            reducer    = ee.Reducer.first(),
+            scale      = TARGET_SCALE_M,
+        )
+        return samples.map(
+            lambda f: f.set({
+                "product"      : pname,
+                "year"         : yr,
+                "month"        : mo,
+                "precip_mm_day": f.get("first"),
+            }).select(
+                ["station_id", "product", "year", "month", "precip_mm_day"]
+            )
+        )
+
+    product_fc = ic.map(sample_image).flatten()
+
+    task = ee.batch.Export.table.toDrive(
+        collection  = product_fc,
+        description = f"precip_extraction_{pname}",
+        folder      = folder,
+        fileFormat  = "CSV",
+    )
+    task.start()
+    print(f"  ↗  Extraction started: precip_extraction_{pname}.csv")
+    return task
+
+
+def extract_all_products(station_fc:       ee.FeatureCollection,
+                          products:         list = None,
+                          drive_folder:     str  = None,
+                          completed:        list = None) -> dict:
+    """
+    Submit one extraction task per product — runs in parallel on GEE.
 
     Parameters
     ──────────
     station_fc   : ee.FeatureCollection of station points
     products     : list of product keys (default: all in COLLECTIONS)
     drive_folder : Google Drive folder name (default from CONFIG)
+    completed    : list of product names already extracted — skipped
+
+    Returns
+    ───────
+    dict of {product_name: ee.batch.Task}
+
+    Usage
+    ─────
+        # First run — submit all products
+        tasks = extract_all_products(station_fc)
+
+        # Re-run — skip products whose CSV already downloaded
+        tasks = extract_all_products(
+            station_fc,
+            completed=["CHIRPS", "GPM_IMERG"]
+        )
     """
     if products is None:
         products = list(COLLECTIONS.keys())
-    folder = drive_folder or CONFIG["drive_folder"]
+    if completed is None:
+        completed = []
 
-    # Build one sampled FC per product, then merge server-side.
-    # Previously: ee.FeatureCollection(all_samples).flatten()
-    # which is invalid (expects Features, not FCs). Now uses .merge().
-    merged_fc = None
-
+    tasks = {}
     for pname in products:
-        ic = COLLECTIONS[pname]
+        if pname in completed:
+            print(f"  ✓  {pname} extraction already done — skipping")
+            continue
+        tasks[pname] = extract_product(station_fc, pname, drive_folder)
 
-        def sample_image(img):
-            # Read year/month from properties set by aggregate_to_monthly()
-            # — more reliable than re-deriving from system:time_start
-            yr  = img.get("year")
-            mo  = img.get("month")
-
-            # Point sample: ee.Reducer.first() on un-buffered point geometry
-            # gives the pixel value at that location — correct for validation
-            samples = img.select("precip_mm_day").reduceRegions(
-                collection = station_fc,
-                reducer    = ee.Reducer.first(),
-                scale      = TARGET_SCALE_M,
-            )
-
-            return samples.map(
-                lambda f: f.set({
-                    "product"      : pname,
-                    "year"         : yr,
-                    "month"        : mo,
-                    "precip_mm_day": f.get("first"),   # ← "first" from Reducer.first()
-                }).select(
-                    ["station_id", "product", "year", "month", "precip_mm_day"]
-                )
-            )
-
-        product_fc = ic.map(sample_image).flatten()
-
-        # Merge sequentially — valid GEE pattern for combining FCs
-        if merged_fc is None:
-            merged_fc = product_fc
-        else:
-            merged_fc = merged_fc.merge(product_fc)
-
-    # Export to Drive as CSV — no region needed for table exports
-    task = ee.batch.Export.table.toDrive(
-        collection  = merged_fc,
-        description = "precip_station_extraction_"
-                      + "_".join(products[:3]),   # truncate for GEE 100-char limit
-        folder      = folder,
-        fileFormat  = "CSV",
-    )
-    task.start()
-    print(f"  ↗  Extraction export started → {folder}/precip_station_extraction.csv")
-    print(f"     Products: {products}")
-    print(f"     Monitor: https://code.earthengine.google.com/tasks")
-    return task
+    print(f"\n  {len(tasks)} extraction task(s) submitted.")
+    print(f"  Each exports: precip_extraction_<PRODUCT>.csv")
+    print(f"  Monitor: https://code.earthengine.google.com/tasks")
+    return tasks
 
 
 # ════════════════════════════════════════════════════════════
 # § 4  MERGE OBSERVATIONS WITH EXTRACTED GRIDDED VALUES
 # ════════════════════════════════════════════════════════════
 
-def merge_obs_and_grid(obs_df:          pd.DataFrame,
-                        extraction_csv:  str) -> pd.DataFrame:
+def merge_obs_and_grid(obs_df:           pd.DataFrame,
+                        extraction_csvs:  object) -> pd.DataFrame:
     """
     Join observed gauge precipitation (obs_df) with extracted
     gridded product values downloaded from Google Drive.
 
-    Parameters
-    ──────────
-    obs_df          : DataFrame with station_id, year, month, obs_mm_day
-    extraction_csv  : path to the CSV exported by extract_all_products()
-                      must contain: station_id, product, year, month,
-                      precip_mm_day
+    Accepts EITHER:
+      • A single CSV path (str/Path) — legacy single-file export
+      • A list of CSV paths         — one per product (new default)
+      • A directory path            — auto-discovers all
+                                      precip_extraction_*.csv files
+
+    All CSV files must contain:
+        station_id, product, year, month, precip_mm_day
 
     Returns
     ───────
@@ -294,18 +318,45 @@ def merge_obs_and_grid(obs_df:          pd.DataFrame,
       station_id | year | month | obs_mm_day | CHIRPS | GPM_IMERG | …
     All value columns are in mm/day.
     """
-    grid_df = pd.read_csv(extraction_csv)
+    # ── Resolve input to a list of file paths ────────────────
+    if isinstance(extraction_csvs, (str, Path)):
+        p = Path(extraction_csvs)
+        if p.is_dir():
+            csv_list = sorted(p.glob("precip_extraction_*.csv"))
+            if not csv_list:
+                csv_list = sorted(p.glob("precip_station_extraction*.csv"))
+            print(f"  Found {len(csv_list)} extraction CSV(s) in {p}")
+        else:
+            csv_list = [p]
+    else:
+        csv_list = [Path(c) for c in extraction_csvs]
 
-    # Validate expected columns
-    required = {"station_id", "product", "year", "month", "precip_mm_day"}
-    missing  = required - set(grid_df.columns)
-    if missing:
-        raise ValueError(
-            f"extraction CSV missing columns: {missing}\n"
-            f"  Found: {list(grid_df.columns)}"
+    if not csv_list:
+        raise FileNotFoundError(
+            "No extraction CSV files found. "
+            "Download from Google Drive and place in DATA_DIR."
         )
 
-    # Pivot: one column per product, rows = station × year × month
+    # ── Load and concatenate all product CSVs ────────────────
+    dfs = []
+    for csv_path in csv_list:
+        df = pd.read_csv(csv_path)
+        required = {"station_id", "product", "year", "month", "precip_mm_day"}
+        missing  = required - set(df.columns)
+        if missing:
+            raise ValueError(
+                f"{csv_path.name} missing columns: {missing}\n"
+                f"  Found: {list(df.columns)}"
+            )
+        dfs.append(df)
+        print(f"  Loaded: {csv_path.name}  "
+              f"({df.product.unique().tolist()}, {len(df):,} rows)")
+
+    grid_df = pd.concat(dfs, ignore_index=True)
+    print(f"  Total rows: {len(grid_df):,}  "
+          f"Products: {sorted(grid_df.product.unique().tolist())}")
+
+    # ── Pivot: one column per product ────────────────────────
     grid_wide = grid_df.pivot_table(
         index   = ["station_id", "year", "month"],
         columns = "product",
@@ -313,8 +364,7 @@ def merge_obs_and_grid(obs_df:          pd.DataFrame,
     ).reset_index()
     grid_wide.columns.name = None
 
-    # Merge on station_id + year + month
-    # obs column is already named "obs_mm_day" — no rename needed
+    # ── Merge observations with gridded values ───────────────
     merged = obs_df.merge(
         grid_wide,
         on  = ["station_id", "year", "month"],
@@ -323,8 +373,8 @@ def merge_obs_and_grid(obs_df:          pd.DataFrame,
 
     out_path = DATA_DIR / "merged_obs_grid.csv"
     merged.to_csv(out_path, index=False)
-    print(f" Merged dataset saved → {out_path}  shape={merged.shape}")
-    print(f"   Columns: {list(merged.columns)}")
+    print(f"\n  Merged dataset saved → {out_path}  shape={merged.shape}")
+    print(f"  Columns: {list(merged.columns)}")
     return merged
 
 
@@ -361,21 +411,56 @@ if __name__ == "__main__":
         crs="EPSG:4326",
     )
     gdf.to_file(DATA_DIR / "stations.geojson", driver="GeoJSON")
-    print(f" Station GeoJSON saved → {DATA_DIR}/stations.geojson")
+    print(f"  Station GeoJSON saved → {DATA_DIR}/stations.geojson")
 
-    # ── Extract or merge depending on whether CSV exists ─────
-    extraction_csv = DATA_DIR / "precip_station_extraction.csv"
+    # ── Per-product extraction tracking ──────────────────────
+    # Add product names here once their CSV has been downloaded
+    # from Google Drive into DATA_DIR.
+    # File naming: precip_extraction_<PRODUCT_NAME>.csv
+    #
+    # Update this list after each successful download:
+    COMPLETED_EXTRACTION = []
+    # e.g. COMPLETED_EXTRACTION = ["CHIRPS", "GPM_IMERG", "ERA5_LAND"]
 
-    if extraction_csv.exists():
-        # CSV already downloaded — skip resubmitting the GEE task
-        print(f" Extraction CSV found — skipping GEE export")
-        merged = merge_obs_and_grid(obs_df, str(extraction_csv))
-        print("\nFirst 5 rows of merged dataset:")
-        print(merged.head())
+    # ── Check which per-product CSVs already exist locally ───
+    existing_csvs = sorted(DATA_DIR.glob("precip_extraction_*.csv"))
+    existing_products = [
+        f.stem.replace("precip_extraction_", "")
+        for f in existing_csvs
+    ]
+    if existing_products:
+        print(f"  Found local CSVs for: {existing_products}")
+
+    # ── Decide: submit missing tasks or run merge ─────────────
+    all_products     = list(COLLECTIONS.keys())
+    done_products    = list(set(COMPLETED_EXTRACTION + existing_products))
+    missing_products = [p for p in all_products if p not in done_products]
+
+    if missing_products:
+        print(f"\n  Missing extractions: {missing_products}")
+        print(f"  Submitting GEE tasks …")
+        tasks = extract_all_products(
+            station_fc,
+            products  = missing_products,
+            completed = done_products,
+        )
+        print("\n  ⚠  Wait for tasks to complete, then:")
+        print("     1. Download each precip_extraction_<PRODUCT>.csv")
+        print(f"     2. Place files in: {DATA_DIR}")
+        print("     3. Re-run this script to auto-merge")
     else:
-        # CSV not yet present — submit extraction task and wait
-        task = extract_all_products(station_fc)
-        print("\n⚠  Wait for the GEE extraction export to complete.")
-        print("   Download the CSV from Google Drive and place in:")
-        print(f"   {DATA_DIR}/precip_station_extraction.csv")
-        print("   Then re-run this script to merge.")
+        print("\n  All product CSVs present — running merge …")
+
+    # ── Merge all available CSVs with observations ────────────
+    # Runs automatically as soon as any CSVs are present locally.
+    # Partial merge is fine — more products can be added later.
+    if existing_csvs:
+        print(f"\n  Merging {len(existing_csvs)} product CSV(s) …")
+        merged = merge_obs_and_grid(obs_df, DATA_DIR)
+        print("\n  First 5 rows of merged dataset:")
+        print(merged.head())
+        if missing_products:
+            print(f"\n  ⚠  Note: {missing_products} not yet included.")
+            print(f"     Re-run after downloading remaining CSVs.")
+    else:
+        print("\n  No local CSVs yet — tasks submitted above, please wait.")
