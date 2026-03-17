@@ -449,7 +449,7 @@ if __name__ == "__main__":
         print(f"     2. Place files in: {DATA_DIR}")
         print("     3. Re-run this script to auto-merge")
     else:
-        print("\n  All product CSVs present — running merge …")
+        print("\n  All product CSVs present — running merge ….")
 
     # ── Merge all available CSVs with observations ────────────
     # Runs automatically as soon as any CSVs are present locally.
