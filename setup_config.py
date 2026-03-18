@@ -342,7 +342,7 @@ RAIN_THRESHOLD_MM_DAY = CONFIG["rain_threshold_mm_day"]   # 1.0 mm/day
 PRODUCT_DATE_RANGES = {
     "CHIRPS"       : ("1981-01-01", "2024-12-31"),
     "PERSIANN_CDR" : ("1983-01-01", "2024-12-31"),
-    # "TRMM_3B43"    : ("1998-01-01", "2019-12-31"),   # ends Dec 2019
+    # "TRMM_3B43"    : ("1998-01-01", "2019-12-31"),   # ends Dec 2019...
     "GPM_IMERG"    : ("2000-06-01", "2024-12-31"),
     "ERA5_LAND"    : ("1950-01-01", "2024-12-31"),
     "MERRA2"       : ("1980-01-01", "2024-12-31"),
