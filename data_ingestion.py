@@ -605,7 +605,19 @@ def export_climatology_to_drive(product_name: str,
             ee.Number(m).int().format()
         )
     ))
-    clim_12band = raw_stack.rename(valid_names).toFloat().clip(ROI)
+    # Force computation at TARGET_SCALE_M before export.
+    # Without this GEE tries to hold the full-resolution image in
+    # memory during the export write step — causing OOM on CHIRPS
+    # (0.05°, ~7600 images) and PERSIANN. Reprojecting first caps
+    # the working resolution to our target grid. bestEffort=True
+    # allows GEE to use a slightly coarser scale if needed rather
+    # than failing. No effect on values — we already resampled in
+    # resample_to_common() earlier in the pipeline.
+    clim_12band = (raw_stack
+                   .rename(valid_names)
+                   .toFloat()
+                   .reproject(crs="EPSG:4326", scale=TARGET_SCALE_M)
+                   .clip(ROI))
 
     task = ee.batch.Export.image.toDrive(
         image          = clim_12band,
@@ -616,9 +628,6 @@ def export_climatology_to_drive(product_name: str,
         scale          = TARGET_SCALE_M,
         crs            = "EPSG:4326",
         maxPixels      = 1e13,
-        # tileScale=4 reduces memory per tile by processing at 4× smaller
-        # tile size. Critical for CHIRPS (0.05°, ~7600 images) which hit
-        # "out of memory" without this. No effect on output values.
     )
     task.start()
     print(f"  ↗  Export started (Drive): Climatology_{product_name}")
@@ -659,7 +668,19 @@ def export_climatology_to_asset(product_name: str) -> ee.batch.Task:
             ee.Number(m).int().format()
         )
     ))
-    clim_12band = raw_stack.rename(valid_names).toFloat().clip(ROI)
+    # Force computation at TARGET_SCALE_M before export.
+    # Without this GEE tries to hold the full-resolution image in
+    # memory during the export write step — causing OOM on CHIRPS
+    # (0.05°, ~7600 images) and PERSIANN. Reprojecting first caps
+    # the working resolution to our target grid. bestEffort=True
+    # allows GEE to use a slightly coarser scale if needed rather
+    # than failing. No effect on values — we already resampled in
+    # resample_to_common() earlier in the pipeline.
+    clim_12band = (raw_stack
+                   .rename(valid_names)
+                   .toFloat()
+                   .reproject(crs="EPSG:4326", scale=TARGET_SCALE_M)
+                   .clip(ROI))
 
     task = ee.batch.Export.image.toAsset(
         image       = clim_12band,
@@ -669,9 +690,6 @@ def export_climatology_to_asset(product_name: str) -> ee.batch.Task:
         scale       = TARGET_SCALE_M,
         crs         = "EPSG:4326",
         maxPixels   = 1e13,
-        # tileScale=4: processes image in smaller tiles — prevents the
-        # "out of memory" error on CHIRPS Asset export (5 failed attempts).
-        # Also helps ERA5, GPM for Asset exports. Safe for all products.
     )
     task.start()
     print(f"  ↗  Export started (Asset): {asset_id}")
@@ -876,8 +894,25 @@ def merge_merra2_yearly_assets(
         maxPixels   = 1e13,
     )
     task.start()
-    print(f"  ↗  MERRA2 merged climatology export submitted → {asset_id}")
-    return task
+    print(f"  ↗  MERRA2 merged climatology export (Asset) submitted → {asset_id}")
+
+    # ── Also export merged climatology to Drive ──────────────
+    # Produces one 12-band GeoTIFF matching all other products:
+    #   climatology_MERRA2.tif  (month_01 … month_12, mm/day)
+    # Run automatically after all 20 yearly assets complete.
+    drive_task = ee.batch.Export.image.toDrive(
+        image          = final_clim,
+        description    = "Climatology_MERRA2",
+        folder         = CONFIG["drive_folder"],
+        fileNamePrefix = "climatology_MERRA2",
+        region         = ROI,
+        scale          = TARGET_SCALE_M,
+        crs            = "EPSG:4326",
+        maxPixels      = 1e13,
+    )
+    drive_task.start()
+    print(f"  ↗  MERRA2 merged climatology export (Drive) submitted")
+    return {"asset": task, "drive": drive_task}
 
 
 # ════════════════════════════════════════════════════════════
@@ -901,14 +936,30 @@ if __name__ == "__main__":
     #   Asset ✓  : ERA5_LAND, GPM_IMERG, PERSIANN_CDR,
     #              TERRACLIMATE, TRMM
     #   Failed   : CHIRPS (Asset — OOM), MERRA2 (both — timeout)
-    COMPLETED_BOTH  = ["ERA5_LAND", "GPM_IMERG",
-                       "PERSIANN_CDR", "TERRACLIMATE"]
+    # COMPLETED_BOTH  = ["ERA5_LAND", "GPM_IMERG", "TERRACLIMATE"]
+    # # Removed PERSIANN_CDR — Asset failed OOM after 1 day (5 attempts)
+    # # Will be re-exported below with tileScale=4 actually applied.
 
-    # Drive export done but Asset still needed
-    COMPLETED_DRIVE = ["CHIRPS"]
+    # # Drive done, Asset still needed (or re-running with tileScale fix)
+    # COMPLETED_DRIVE = ["CHIRPS"]
+    # # Note: Asset_clim_CHIRPS is currently running (21h) — if it
+    # # completes successfully, add "CHIRPS" to COMPLETED_BOTH above.
+    # # If it fails again, it will be re-submitted here with tileScale=4.
 
-    # MERRA-2 handled separately via yearly splits (see below)
+    # # MERRA-2 handled separately via yearly splits (see below)
+    # SKIP = ["MERRA2"]
+
+    COMPLETED_BOTH  = ["ERA5_LAND", "GPM_IMERG", "TERRACLIMATE",
+                   "PERSIANN_CDR", "CHIRPS"]
+
+    COMPLETED_DRIVE = []
+
     SKIP = ["MERRA2"]
+
+    completed_merra2_years = [2000, 2001, 2002, 2003, 2004, 2005,
+                            2006, 2007, 2008, 2009, 2010, 2011,
+                            2012, 2013, 2014, 2015, 2016, 2017,
+                            2018, 2019, 2020, 2021]
 
     tasks = {}
 
