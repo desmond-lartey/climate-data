@@ -944,7 +944,7 @@ if __name__ == "__main__":
     # COMPLETED_DRIVE = ["CHIRPS"]
     # # Note: Asset_clim_CHIRPS is currently running (21h) — if it
     # # completes successfully, add "CHIRPS" to COMPLETED_BOTH above.
-    # # If it fails again, it will be re-submitted here with tileScale=4.
+    # # If it fails again, it will be re-submitted here with tilScale=4.
 
     # # MERRA-2 handled separately via yearly splits (see below)
     # SKIP = ["MERRA2"]
