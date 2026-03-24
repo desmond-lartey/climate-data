@@ -925,91 +925,89 @@ if __name__ == "__main__":
     print("  DATA INGESTION — Export Climatologies")
     print("═" * 60)
 
-    # ── Completed tracking ───────────────────────────────────
-    # Add product names here once BOTH Drive AND Asset exports
-    # have completed successfully in the GEE Tasks tab.
-    # These products will be skipped entirely on the next run.
+    # ════════════════════════════════════════════════════════
+    # CURRENT STATUS — update this block after each run
+    # ════════════════════════════════════════════════════════
     #
-    # Current status (update after each successful run):
-    #   Drive ✓  : ERA5_LAND, GPM_IMERG, PERSIANN_CDR,
-    #              TERRACLIMATE, CHIRPS, TRMM
-    #   Asset ✓  : ERA5_LAND, GPM_IMERG, PERSIANN_CDR,
-    #              TERRACLIMATE, TRMM
-    #   Failed   : CHIRPS (Asset — OOM), MERRA2 (both — timeout)
-    # COMPLETED_BOTH  = ["ERA5_LAND", "GPM_IMERG", "TERRACLIMATE"]
-    # # Removed PERSIANN_CDR — Asset failed OOM after 1 day (5 attempts)
-    # # Will be re-exported below with tileScale=4 actually applied.
+    # CLIMATOLOGY EXPORTS — what is done vs still needed
+    # ───────────────────────────────────────────────────────
+    # Both Drive + Asset completed — skip entirely:
+    COMPLETED_BOTH = [
+        "ERA5_LAND",      # Drive ✓  Asset ✓
+        "GPM_IMERG",      # Drive ✓  Asset ✓
+        "TERRACLIMATE",   # Drive ✓  Asset ✓
+        # "PERSIANN_CDR", # ← add here once Asset confirmed done
+        # "CHIRPS",       # ← add here once Asset confirmed done
+    ]
 
-    # # Drive done, Asset still needed (or re-running with tileScale fix)
-    # COMPLETED_DRIVE = ["CHIRPS"]
-    # # Note: Asset_clim_CHIRPS is currently running (21h) — if it
-    # # completes successfully, add "CHIRPS" to COMPLETED_BOTH above.
-    # # If it fails again, it will be re-submitted here with tilScale=4.
+    # Drive done, Asset still running — do NOT resubmit Asset
+    COMPLETED_DRIVE_ONLY = [
+        "PERSIANN_CDR",   # Drive ✓  Asset still running
+        "CHIRPS",       # Drive ✓  Asset failed OOM (5 attempts) — retry below
+        "TERRACLIMATE",   # Drive ✓  Asset COMPLETES
+        "ERA5_LAND",      # Drive ✓  Asset still running
+        "GPM_IMERG",      # Drive ✓  Asset scompletes
+    ]
 
-    # # MERRA-2 handled separately via yearly splits (see below)
-    # SKIP = ["MERRA2"]
+    # CHIRPS: Drive done, Asset failed OOM (5 attempts) — retry below
+    # Set True once Asset_clim_CHIRPS completes successfully
+    CHIRPS_ASSET_DONE = False
 
-    COMPLETED_BOTH  = ["ERA5_LAND", "GPM_IMERG", "TERRACLIMATE",
-                   "PERSIANN_CDR", "CHIRPS"]
-
-    COMPLETED_DRIVE = []
-
+    # MERRA-2: all 22 yearly assets done (2000–2021) — skip yearly exports
+    # Only the merge step remains — see instructions below
     SKIP = ["MERRA2"]
 
-    completed_merra2_years = [2000, 2001, 2002, 2003, 2004, 2005,
-                            2006, 2007, 2008, 2009, 2010, 2011,
-                            2012, 2013, 2014, 2015, 2016, 2017,
-                            2018, 2019, 2020, 2021]
-
+    # ════════════════════════════════════════════════════════
     tasks = {}
 
     for pname in COLLECTIONS:
 
         if pname in SKIP:
-            print(f"  ⊘  Skipping {pname} (handled separately)")
+            print(f"  ⊘  {pname} — yearly assets done, merge step pending")
             continue
 
         if pname in COMPLETED_BOTH:
-            print(f"  ✓  {pname} — both exports done, skipping")
+            print(f"  ✓  {pname} — Drive + Asset both done, skipping")
             continue
 
+        # PERSIANN: Drive done, Asset still running — do not resubmit
+        if pname in COMPLETED_DRIVE_ONLY:
+            print(f"  ⏳ {pname} — Asset still running, not resubmitting")
+            continue
+
+        # CHIRPS: Drive done, retry Asset only
+        if pname == "CHIRPS":
+            if CHIRPS_ASSET_DONE:
+                print(f"  ✓  CHIRPS — Asset done, skipping")
+                continue
+            print(f"\n  Retrying CHIRPS Asset (OOM fix: reproject applied) …")
+            t = export_climatology_to_asset("CHIRPS")
+            if t:
+                tasks["CHIRPS_asset"] = t
+            continue
+
+        # Any remaining product — submit both Drive and Asset
         print(f"\n  Submitting: {pname}")
-
-        # Drive export — skip if already completed
-        if pname not in COMPLETED_DRIVE:
-            t_drive = export_climatology_to_drive(pname)
-            if t_drive:
-                tasks[f"{pname}_drive"] = t_drive
-        else:
-            print(f"     Drive already done for {pname} — skipping Drive")
-
-        # Asset export
+        t_drive = export_climatology_to_drive(pname)
+        if t_drive:
+            tasks[f"{pname}_drive"] = t_drive
         t_asset = export_climatology_to_asset(pname)
         if t_asset:
             tasks[f"{pname}_asset"] = t_asset
 
-    # ── MERRA-2: submit yearly exports ──────────────────────
-    # Each year = ~365 daily images → completes in ~30-60 min
-    # instead of timing out at 12h with the full 20-year job.
+    # ── MERRA-2 merge instructions ───────────────────────────
+    # All 22 yearly assets (2000–2021) completed.
+    # Run this ONCE to merge into final 20-year climatology:
     #
-    # After ALL 20 yearly assets complete, run:
-    #   merge_merra2_yearly_assets()
+    #   from data_ingestion import merge_merra2_yearly_assets
+    #   merge_merra2_yearly_assets(years=list(range(2001, 2021)))
     #
-    # completed_merra2_years: add years as they finish
-    completed_merra2_years = []   # e.g. [2001, 2002, 2003, ...]
-
-    merra2_tasks = export_climatology_merra2_yearly(
-        completed_years=completed_merra2_years
-    )
-    tasks.update({f"MERRA2_{yr}": t for yr, t in merra2_tasks.items()})
+    # Uses only 2001–2020 to match the study period in CONFIG.
+    # Assets for 2000 and 2021 exist but are outside study period.
+    print(f"\n  ℹ  MERRA-2: all yearly assets done (2000–2021)")
+    print(f"     Next: run merge_merra2_yearly_assets(years=list(range(2001,2021)))")
 
     print(f"\n{'═'*60}")
     print(f"  {len(tasks)} export task(s) submitted.")
     print(f"  Monitor: https://code.earthengine.google.com/tasks")
-    print(f"\n  MERRA-2 instructions:")
-    print(f"  1. Add completed years to completed_merra2_years list")
-    print(f"  2. Re-run to submit remaining years")
-    print(f"  3. Once ALL 20 years done, run:")
-    print(f"       from data_ingestion import merge_merra2_yearly_assets")
-    print(f"       merge_merra2_yearly_assets()")
     print(f"{'═'*60}\n")
