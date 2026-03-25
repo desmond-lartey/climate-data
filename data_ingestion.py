@@ -983,7 +983,7 @@ if __name__ == "__main__":
             print(f"\n  Retrying CHIRPS Asset (OOM fix: reproject applied) …")
             t = export_climatology_to_asset("CHIRPS")
             if t:
-                tasks["CHIRPS_asset"] = t
+                tasks["CHIRPS_asset"] = t 
             continue
 
         # Any remaining product — submit both Drive and Asset
