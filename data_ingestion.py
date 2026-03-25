@@ -951,7 +951,7 @@ if __name__ == "__main__":
 
     # CHIRPS: Drive done, Asset failed OOM (5 attempts) — retry below
     # Set True once Asset_clim_CHIRPS completes successfully
-    CHIRPS_ASSET_DONE = False
+    CHIRPS_ASSET_DONE = True  # ← set to True once CHIRPS Asset completes successfully
 
     # MERRA-2: all 22 yearly assets done (2000–2021) — skip yearly exports
     # Only the merge step remains — see instructions below
