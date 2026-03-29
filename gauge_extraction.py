@@ -177,7 +177,7 @@ def load_gpcc_from_nc(nc_path: str,
             })
 
     df = pd.DataFrame(records)
-    print(f"✅ GPCC extracted: {len(df):,} records "
+    print(f" GPCC extracted: {len(df):,} records "
           f"for {len(stations_df)} stations")
     return df
 
@@ -293,6 +293,142 @@ def extract_all_products(station_fc:       ee.FeatureCollection,
     return tasks
 
 
+
+def extract_merra2_from_assets(station_fc:      ee.FeatureCollection,
+                                years:           list = None,
+                                completed_years: list = None,
+                                drive_folder:    str  = None) -> dict:
+    """
+    Extract MERRA2 station values from pre-exported yearly climatology
+    assets — NO hourly reprocessing required.
+
+    WHY THIS APPROACH
+    ─────────────────
+    All previous attempts timed out because they rebuilt the full
+    hourly MERRA2 pipeline (175,000 images) at extraction time:
+      • Single task:  52,843 EECU → 12h timeout
+      • Yearly split: 40,561 EECU → 12h timeout (still hourly)
+
+    Solution: the yearly climatology assets already exist in GEE
+    (climatology_MERRA2_2000 … climatology_MERRA2_2021). Each is a
+    12-band image (month_01…month_12) representing the mean mm/day
+    for that calendar month in that year. Sample these directly —
+    no hourly data touched at all.
+
+    One task per year: reads 1 image (12 bands) × 15 points = 15
+    features per task. Completes in seconds not hours.
+
+    Parameters
+    ──────────
+    station_fc      : ee.FeatureCollection of station points
+    years           : list of years (default: 2001–2020)
+    completed_years : years already extracted — skipped
+    drive_folder    : Drive folder name
+
+    Returns dict of {year: ee.batch.Task}
+    """
+    if years is None:
+        years = list(range(START_YEAR, END_YEAR + 1))
+    if completed_years is None:
+        completed_years = []
+
+    folder     = drive_folder or CONFIG["drive_folder"]
+    asset_base = CONFIG["asset_folder"]
+    tasks      = {}
+
+    for yr in years:
+        if yr in completed_years:
+            print(f"  ✓  MERRA2 {yr} extraction done — skipping")
+            continue
+
+        asset_id = asset_base + f"climatology_MERRA2_{yr}"
+        clim_img = ee.Image(asset_id)  # 12-band: month_01…month_12
+
+        # Convert 12-band climatology image into a FeatureCollection
+        # one feature per month per station — sample each band at point
+        month_names = [f"month_{str(m).zfill(2)}" for m in range(1, 13)]
+
+        features = []
+        for mo_idx, band_name in enumerate(month_names):
+            mo = mo_idx + 1
+            band_img = clim_img.select([band_name]).rename("precip_mm_day")
+
+            samples = band_img.reduceRegions(
+                collection = station_fc,
+                reducer    = ee.Reducer.first(),
+                scale      = TARGET_SCALE_M,
+            )
+
+            mo_features = samples.map(
+                lambda f: f.set({
+                    "product"      : "MERRA2",
+                    "year"         : yr,
+                    "month"        : mo,
+                    "precip_mm_day": f.get("first"),
+                }).select(
+                    ["station_id", "product", "year",
+                     "month", "precip_mm_day"]
+                )
+            )
+            features.append(mo_features)
+
+        # Merge all 12 months into one FC for this year
+        year_fc = features[0]
+        for fc in features[1:]:
+            year_fc = year_fc.merge(fc)
+
+        task = ee.batch.Export.table.toDrive(
+            collection  = year_fc,
+            description = f"precip_extraction_MERRA2_{yr}",
+            folder      = folder,
+            fileFormat  = "CSV",
+        )
+        task.start()
+        tasks[yr] = task
+        print(f"  ↗  MERRA2 {yr} submitted from asset → "
+              f"precip_extraction_MERRA2_{yr}.csv")
+
+    print(f"\n  {len(tasks)} MERRA2 asset-based extraction task(s) submitted.")
+    print(f"  These read from pre-exported assets — no hourly reprocessing.")
+    print(f"  After ALL complete, call merge_merra2_extraction_csvs()")
+    return tasks
+
+
+def merge_merra2_extraction_csvs(data_dir:    str = None,
+                                  output_name: str = "precip_extraction_MERRA2.csv"
+                                  ) -> None:
+    """
+    Concatenate all precip_extraction_MERRA2_<YEAR>.csv files into
+    one precip_extraction_MERRA2.csv ready for merge_obs_and_grid().
+
+    Usage
+    ─────
+        from gauge_extraction import merge_merra2_extraction_csvs
+        merge_merra2_extraction_csvs()
+    """
+    d = Path(data_dir) if data_dir else DATA_DIR
+    yearly_csvs = sorted(d.glob("precip_extraction_MERRA2_*.csv"))
+
+    if not yearly_csvs:
+        print(f"  ❌ No MERRA2 yearly CSVs found in {d}")
+        print(f"     Expected: precip_extraction_MERRA2_2001.csv etc.")
+        return
+
+    dfs = []
+    for csv_path in yearly_csvs:
+        df = pd.read_csv(csv_path)
+        dfs.append(df)
+        print(f"  Loaded: {csv_path.name}  ({len(df):,} rows)")
+
+    combined = pd.concat(dfs, ignore_index=True)
+    out_path  = d / output_name
+    combined.to_csv(out_path, index=False)
+    print(f"\n   MERRA2 extraction merged → {out_path}")
+    print(f"     Total rows : {len(combined):,}")
+    print(f"     Years      : {sorted(combined.year.unique().tolist())}")
+    print(f"     Stations   : {combined.station_id.nunique()}")
+
+
 # ════════════════════════════════════════════════════════════
 # § 4  MERGE OBSERVATIONS WITH EXTRACTED GRIDDED VALUES
 # ════════════════════════════════════════════════════════════
@@ -388,23 +524,32 @@ if __name__ == "__main__":
     print("  GAUGE EXTRACTION — Step 2")
     print("═" * 60)
 
+    # ════════════════════════════════════════════════════════
+    # CURRENT STATUS — update after each completed task
+    # ════════════════════════════════════════════════════════
+    #
+    #  Product         CSV downloaded?   Action
+    #  ─────────────── ──────────────── ─────────────────────
+    #  ERA5_LAND        YES            In DATA_DIR
+    #  GPM_IMERG        YES            In DATA_DIR
+    #  TERRACLIMATE     YES            In DATA_DIR
+    #  PERSIANN_CDR     YES            In DATA_DIR
+    #  CHIRPS          ⏳ NO             → Re-submit (task below)
+    #  MERRA2          ❌ Timed out      → Yearly split (task below)
+
+    # Products whose CSVs are already downloaded and in DATA_DIR
+    COMPLETED_EXTRACTION = [
+        "ERA5_LAND",
+        "GPM_IMERG",
+        "TERRACLIMATE",
+        "PERSIANN_CDR",
+        "CHIRPS",       #  completed
+    ]
+
     # ── Load stations and observations ───────────────────────
-    # Option A: demo data (default)
     stations_df, obs_df, station_fc = get_stations_and_obs()
 
-    # Option B: real gauge CSV — uncomment when available
-    # stations_df, obs_df, station_fc = get_stations_and_obs(
-    #     stations_csv = "data/wa_gauge_stations.csv",
-    #     obs_csv      = "data/wa_gauge_obs_2001_2020.csv",
-    # )
-
-    # Option C: GPCC .nc file — uncomment when downloaded
-    # obs_df = load_gpcc_from_nc(
-    #     "data/gpcc_full_v2022_025.nc",
-    #     stations_df
-    # )
-
-    # Save station locations as GeoJSON for inspection
+    # Save station GeoJSON
     gdf = gpd.GeoDataFrame(
         stations_df,
         geometry=gpd.points_from_xy(stations_df.lon, stations_df.lat),
@@ -413,54 +558,71 @@ if __name__ == "__main__":
     gdf.to_file(DATA_DIR / "stations.geojson", driver="GeoJSON")
     print(f"  Station GeoJSON saved → {DATA_DIR}/stations.geojson")
 
-    # ── Per-product extraction tracking ──────────────────────
-    # Add product names here once their CSV has been downloaded
-    # from Google Drive into DATA_DIR.
-    # File naming: precip_extraction_<PRODUCT_NAME>.csv
-    #
-    # Update this list after each successful download:
-    COMPLETED_EXTRACTION = []
-    # e.g. COMPLETED_EXTRACTION = ["CHIRPS", "GPM_IMERG", "ERA5_LAND"]
+    # ════════════════════════════════════════════════════════
+    # STEP A — CHIRPS is DONE — skip
+    # ════════════════════════════════════════════════════════
+    print("  ✓  CHIRPS CSV already completed — skipping Step A")
 
-    # ── Check which per-product CSVs already exist locally ───
+    # ════════════════════════════════════════════════════════
+    # STEP B — MERRA2 CSV from pre-exported yearly assets
+    # Reads climatology_MERRA2_<YEAR> assets directly —
+    # no hourly reprocessing — should complete in minutes per year.
+    # Previous approaches timed out:
+    #   Single task    : 52,843 EECU → 12h timeout
+    #   Yearly rebuild : 40,561 EECU → 12h timeout
+    # This approach reads 1 asset image × 15 points = instant.
+    # ════════════════════════════════════════════════════════
+    print("\n" + "─" * 60)
+    print("  STEP B: MERRA2 extraction from yearly assets")
+    print("─" * 60)
+
+    # Add years here as their CSVs are downloaded from Drive
+    completed_merra2_extraction = []
+    # e.g. completed_merra2_extraction = [2001, 2002, 2003, ...]
+
+    merra2_tasks = extract_merra2_from_assets(
+        station_fc,
+        completed_years = completed_merra2_extraction,
+    )
+    print(f"""
+  ══════════════════════════════════════════════════════
+  MERRA2 ASSET-BASED EXTRACTION SUBMITTED
+  ══════════════════════════════════════════════════════
+  Method   : reads climatology_MERRA2_<YEAR> assets directly
+  Each task: 12 months × 15 stations = 180 features, no hourly data
+  Output   : precip_extraction_MERRA2_<YEAR>.csv per year
+
+  AFTER ALL DOWNLOADS COMPLETE:
+    1. Place all precip_extraction_MERRA2_*.csv in DATA_DIR
+    2. Run: merge_merra2_extraction_csvs()
+    3. Re-run this script for full 6-product merge
+  ══════════════════════════════════════════════════════
+    """)
+
+    # ════════════════════════════════════════════════════════
+    # STEP C — PARTIAL MERGE with available CSVs
+    # ════════════════════════════════════════════════════════
+    print("\n" + "─" * 60)
+    print("  STEP C: Merging available CSVs with observations")
+    print("─" * 60)
+
     existing_csvs = sorted(DATA_DIR.glob("precip_extraction_*.csv"))
     existing_products = [
         f.stem.replace("precip_extraction_", "")
         for f in existing_csvs
+        if "MERRA2_2" not in f.stem   # exclude yearly MERRA2 splits
     ]
-    if existing_products:
-        print(f"  Found local CSVs for: {existing_products}")
 
-    # ── Decide: submit missing tasks or run merge ─────────────
-    all_products     = list(COLLECTIONS.keys())
-    done_products    = list(set(COMPLETED_EXTRACTION + existing_products))
-    missing_products = [p for p in all_products if p not in done_products]
-
-    if missing_products:
-        print(f"\n  Missing extractions: {missing_products}")
-        print(f"  Submitting GEE tasks …")
-        tasks = extract_all_products(
-            station_fc,
-            products  = missing_products,
-            completed = done_products,
-        )
-        print("\n  ⚠  Wait for tasks to complete, then:")
-        print("     1. Download each precip_extraction_<PRODUCT>.csv")
-        print(f"     2. Place files in: {DATA_DIR}")
-        print("     3. Re-run this script to auto-merge")
-    else:
-        print("\n  All product CSVs present — running merge ....")
-
-    # ── Merge all available CSVs with observations ────────────
-    # Runs automatically as soon as any CSVs are present locally.
-    # Partial merge is fine — more products can be added later.
     if existing_csvs:
-        print(f"\n  Merging {len(existing_csvs)} product CSV(s) …")
+        print(f"  Found CSVs for: {existing_products}")
         merged = merge_obs_and_grid(obs_df, DATA_DIR)
         print("\n  First 5 rows of merged dataset:")
         print(merged.head())
-        if missing_products:
-            print(f"\n  ⚠  Note: {missing_products} not yet included.")
-            print(f"     Re-run after downloading remaining CSVs.")
     else:
-        print("\n  No local CSVs yet — tasks submitted above, please wait.")
+        print("  No local CSVs found in DATA_DIR.")
+        print(f"  Expected location: {DATA_DIR}/")
+
+    print(f"\n{'═'*60}")
+    print(f"  GAUGE EXTRACTION run complete.")
+    print(f"  Monitor: https://code.earthengine.google.com/tasks")
+    print(f"{'═'*60}\n")

@@ -114,7 +114,7 @@ CONFIG = {
     # ── Output directories ───────────────────────────────────
     "output_dir" : "outputs/precipitation_assessment",
     "figures_dir": "outputs/precipitation_assessment/figures",
-    "data_dir"   : "outputs/precipitation_assessment/data",
+    "data_dir"   : "C:\\Users\\Gebruiker\\OneDrive\\Spain\\Paper 1\\precipitation_assessment\\DATA_DIR",
 
     # ── GEE Asset folder for intermediate exports ─────────────
     "asset_folder": "projects/ee-desmond/assets/",
