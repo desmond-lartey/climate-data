@@ -116,7 +116,7 @@ CONFIG = {
     "figures_dir": "outputs/precipitation_assessment/figures",
     "data_dir"   : "C:\\Users\\Gebruiker\\OneDrive\\Spain\\Paper 1\\precipitation_assessment\\DATA_DIR",
 
-    # ── GEE Asset folder for intermediate exports ─────────────
+    # ── GEE Asset folder for intermediate export ─────────────
     "asset_folder": "projects/ee-desmond/assets/",
 
     # ── Google Drive folder for final GeoTIFF exports ─────────
