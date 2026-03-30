@@ -43,7 +43,7 @@ def _load_config_only():
     src_path = Path(__file__).parent / "setup_config.py"
     if not src_path.exists():
         raise FileNotFoundError(f"setup_config.py not found at {src_path}")
-    with open(src_path) as f:
+    with open(src_path, encoding="utf-8") as f:
         src = f.read()
     # Strip GEE-dependent lines
     lines = []
@@ -72,14 +72,27 @@ try:
     _cfg_mod = _load_config_only()
     CONFIG         = _cfg_mod.CONFIG
     PRODUCTS       = _cfg_mod.PRODUCTS
-    RAIN_THRESHOLD = getattr(_cfg_mod, "RAIN_THRESHOLD", 1.0) or 1.0
-    METRICS        = getattr(_cfg_mod, "METRICS", [])
+    # RAIN_THRESHOLD_MM_DAY is the new name; fall back to old name or 1.0
+    RAIN_THRESHOLD = (
+        getattr(_cfg_mod, "RAIN_THRESHOLD_MM_DAY", None) or
+        getattr(_cfg_mod, "RAIN_THRESHOLD", None) or 1.0
+    )
+    # METRICS is now a dict {continuous:[...], categorical:[...]}
+    # Handle both dict and flat list for backwards compatibility
+    _metrics_raw = getattr(_cfg_mod, "METRICS", [])
+    if isinstance(_metrics_raw, dict):
+        METRICS = (
+            _metrics_raw.get("continuous", []) +
+            _metrics_raw.get("categorical", [])
+        )
+    else:
+        METRICS = _metrics_raw
 except Exception as e:
     print(f"  ⚠  Could not load setup_config.py ({e})")
-    print("     Using fallback defaults.")
+    print("     Using hardcoded paths.")
     CONFIG = {
-        "data_dir"   : "outputs/precipitation_assessment/data",
-        "figures_dir": "outputs/precipitation_assessment/figures",
+        "data_dir"   : r"C:\Users\Gebruiker\OneDrive\Spain\Paper 1\precipitation_assessment\DATA_DIR",
+        "figures_dir": r"C:\Users\Gebruiker\OneDrive\Spain\Paper 1\precipitation_assessment\figures",
         "start_date" : "2001-01-01",
         "end_date"   : "2020-12-31",
     }
