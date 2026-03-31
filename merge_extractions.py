@@ -3,47 +3,20 @@
 GLOBAL PRECIPITATION PRODUCTS — COMPARATIVE ASSESSMENT
 West Africa  |  2001–2020
 ============================================================
-Step 3: Local Merge — CSV Extractions + Observations
+Step 2: Local Merge — CSV Extractions + Observations
 ============================================================
-Runs ENTIRELY LOCALLY — no GEE calls, no Earth Engine imports,
-no exports submitted. Safe to run repeatedly without triggering
-any GEE tasks.
+Runs ENTIRELY LOCALLY — no GEE calls.
 
 WHAT THIS SCRIPT DOES
 ──────────────────────
-1. Merges the 22 MERRA2 yearly CSVs into one file
-2. Loads all 6 product extraction CSVs from DATA_DIR
+1. Rebuilds the merged MERRA2 CSV correctly from yearly splits
+2. Loads all 6 product extraction CSVs
 3. Loads station observations (demo or real)
-4. Produces merged_obs_grid.csv — the core validation dataset
-
-INPUT FILES EXPECTED IN DATA_DIR
-──────────────────────────────────
-  precip_extraction_CHIRPS.csv
-  precip_extraction_ERA5_LAND.csv
-  precip_extraction_GPM_IMERG.csv
-  precip_extraction_PERSIANN_CDR.csv
-  precip_extraction_TERRACLIMATE.csv
-  precip_extraction_MERRA2_2000.csv   ← yearly splits
-  precip_extraction_MERRA2_2001.csv
-  ...
-  precip_extraction_MERRA2_2021.csv
-
-OUTPUT FILES
-─────────────
-  precip_extraction_MERRA2.csv        ← merged MERRA2 time series
-  merged_obs_grid.csv                 ← final validation dataset
-
-COLUMNS IN merged_obs_grid.csv
-────────────────────────────────
-  station_id | year | month | obs_mm_day |
-  CHIRPS | ERA5_LAND | GPM_IMERG | MERRA2 | PERSIANN_CDR | TERRACLIMATE
-  (all precipitation values in mm/day)
+4. Produces merged_obs_grid.csv
 
 HOW TO RUN
 ───────────
   python merge_extractions.py
-
-No arguments needed — DATA_DIR is read from setup_config.py.
 ============================================================
 """
 
@@ -51,12 +24,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-
-# ════════════════════════════════════════════════════════════
-# § 0  CONFIG — read from setup_config (no GEE needed)
-# ════════════════════════════════════════════════════════════
-
-# Import only the non-GEE parts of setup_config
 from setup_config import CONFIG
 
 DATA_DIR   = Path(CONFIG["data_dir"])
@@ -66,62 +33,149 @@ END_YEAR   = int(CONFIG["end_date"][:4])     # 2020
 print("=" * 60)
 print("  LOCAL MERGE — Precipitation Assessment")
 print("=" * 60)
-print(f"  DATA_DIR   : {DATA_DIR}")
+print(f"  DATA_DIR    : {DATA_DIR}")
 print(f"  Study period: {START_YEAR}–{END_YEAR}")
-print()
 
 
 # ════════════════════════════════════════════════════════════
-# § 1  MERGE MERRA2 YEARLY CSVs → ONE FILE
+# UTILITY: find the precip value column in any extraction CSV
 # ════════════════════════════════════════════════════════════
 
-def merge_merra2_yearly(data_dir: Path,
-                         study_start: int,
-                         study_end:   int) -> Path:
+def _find_precip_col(df: pd.DataFrame) -> str:
     """
-    Concatenate all precip_extraction_MERRA2_<YEAR>.csv files
-    into one precip_extraction_MERRA2.csv.
-
-    Filters to study period only (2001–2020) — drops 2000 and
-    2021 which exist in DATA_DIR but are outside the study window.
-
-    Returns path to the merged file.
+    Return the name of the precipitation value column.
+    GEE exports use different names across products/versions:
+      precip_mm_day, precipitation, precip, value, mean, etc.
+    We find it by excluding known metadata columns.
     """
-    yearly_csvs = sorted(data_dir.glob("precip_extraction_MERRA2_????.csv"))
+    non_precip = {
+        "system:index", ".geo", "station_id", "product",
+        "year", "month", "zone_name", "zone_id",
+    }
+    candidates = [
+        c for c in df.columns
+        if c not in non_precip
+        and pd.api.types.is_numeric_dtype(df[c])
+    ]
+    if not candidates:
+        raise ValueError(
+            f"Cannot find precipitation column. "
+            f"Columns found: {list(df.columns)}"
+        )
+    if len(candidates) == 1:
+        return candidates[0]
+    # Prefer columns with "precip" or "mm" in the name
+    for pref in ["precip_mm_day", "precip", "mm_day", "precipitation",
+                 "value", "mean"]:
+        for c in candidates:
+            if pref in c.lower():
+                return c
+    return candidates[0]
 
-    if not yearly_csvs:
-        print("  ⚠  No MERRA2 yearly CSVs found.")
-        print(f"     Expected: {data_dir}/precip_extraction_MERRA2_2001.csv etc.")
+
+# ════════════════════════════════════════════════════════════
+# § 1  REBUILD MERRA2 FROM YEARLY SPLITS
+# ════════════════════════════════════════════════════════════
+
+def rebuild_merra2(data_dir: Path,
+                   start: int, end: int) -> Path:
+    """
+    Rebuild precip_extraction_MERRA2.csv from yearly split files.
+
+    Each yearly file (e.g. MERRA2_2005.csv) was exported from GEE
+    containing ALL years × 15 stations × 12 months, but only the rows
+    for the file's own year have real values — the rest are NaN.
+    Concatenating naively creates 22× duplicate NaN rows.
+
+    Fix:
+      1. Detect the actual precip column (auto-detect)
+      2. Drop NaN rows BEFORE concatenating
+      3. Keep only rows whose year matches the filename year
+      4. Deduplicate on station_id + year + month
+    """
+    yearly = sorted(data_dir.glob("precip_extraction_MERRA2_????.csv"))
+    if not yearly:
+        print("  ⚠  No MERRA2 yearly CSVs found")
         return None
 
-    print(f"  Found {len(yearly_csvs)} MERRA2 yearly CSV(s):")
+    print(f"\n  Rebuilding MERRA2 from {len(yearly)} yearly CSVs...")
     dfs = []
-    for csv_path in yearly_csvs:
-        df  = pd.read_csv(csv_path)
-        yr  = int(csv_path.stem.split("_")[-1])
 
-        # Filter to study period only
-        if yr < study_start or yr > study_end:
-            print(f"    ⊘  {csv_path.name}  ({len(df):,} rows) "
-                  f"— outside study period, skipping")
+    for csv_path in yearly:
+        yr = int(csv_path.stem.split("_")[-1])
+        if yr < start or yr > end:
+            print(f"  ⊘  {csv_path.name}  (outside {start}-{end}, skipping)")
             continue
 
+        df = pd.read_csv(csv_path)
+
+        # Auto-detect the precipitation column
+        try:
+            pcol = _find_precip_col(df)
+        except ValueError as e:
+            print(f"  ⚠  {csv_path.name}: {e} — skipping")
+            continue
+
+        # Rename to standard name
+        if pcol != "precip_mm_day":
+            df = df.rename(columns={pcol: "precip_mm_day"})
+
+        # Drop rows where precip is NaN (other years' placeholder rows)
+        df = df.dropna(subset=["precip_mm_day"])
+
+        # Keep only rows that belong to this file's year
+        if "year" in df.columns:
+            df = df[df["year"].astype(int) == yr]
+
+        # Ensure correct types
+        df["year"]          = df["year"].astype(int)
+        df["month"]         = df["month"].astype(int)
+        df["precip_mm_day"] = pd.to_numeric(df["precip_mm_day"],
+                                             errors="coerce")
+
+        # Keep only needed columns
+        keep = ["station_id", "product", "year", "month", "precip_mm_day"]
+        df = df[[c for c in keep if c in df.columns]]
+
+        # Fill product column if missing
+        if "product" not in df.columns:
+            df["product"] = "MERRA2"
+
+        n = len(df)
+        expected = 15 * 12   # 15 stations × 12 months
+        flag = "✓" if n >= expected * 0.9 else "⚠"
+        print(f"  {flag}  {csv_path.name}  → {n} rows "
+              f"(expected ~{expected})")
         dfs.append(df)
-        print(f"    ✓  {csv_path.name}  ({len(df):,} rows)")
 
     if not dfs:
-        print("  ❌ No MERRA2 CSVs within study period.")
+        print("  ❌ No MERRA2 data loaded within study period")
         return None
 
-    combined  = pd.concat(dfs, ignore_index=True)
-    out_path  = data_dir / "precip_extraction_MERRA2.csv"
-    combined.to_csv(out_path, index=False)
+    combined = pd.concat(dfs, ignore_index=True)
 
-    print(f"\n   MERRA2 merged → {out_path.name}")
-    print(f"     Rows     : {len(combined):,}")
-    print(f"     Years    : {sorted(combined['year'].unique().tolist())}")
-    print(f"     Stations : {combined['station_id'].nunique()}")
-    return out_path
+    # Deduplicate
+    before = len(combined)
+    combined = combined.drop_duplicates(
+        subset=["station_id", "year", "month"]
+    )
+    if before != len(combined):
+        print(f"  Removed {before - len(combined)} duplicate rows")
+
+    combined = combined.sort_values(
+        ["year", "month", "station_id"]
+    ).reset_index(drop=True)
+
+    out = data_dir / "precip_extraction_MERRA2.csv"
+    combined.to_csv(out, index=False)
+
+    expected_total = (end - start + 1) * 12 * 15
+    print(f"\n  ✅ MERRA2 rebuilt → {out.name}")
+    print(f"     Rows     : {len(combined):,}  (expected {expected_total:,})")
+    print(f"     Years    : {sorted(combined['year'].unique())}")
+    print(f"     Stations : {sorted(combined['station_id'].unique())}")
+    print(f"     NaN      : {combined['precip_mm_day'].isna().sum()}")
+    return out
 
 
 # ════════════════════════════════════════════════════════════
@@ -130,132 +184,124 @@ def merge_merra2_yearly(data_dir: Path,
 
 def load_extraction_csvs(data_dir: Path) -> pd.DataFrame:
     """
-    Load all precip_extraction_<PRODUCT>.csv files from data_dir.
-    Skips the yearly MERRA2 splits (precip_extraction_MERRA2_YYYY.csv)
-    — only loads the merged precip_extraction_MERRA2.csv.
-
-    Returns long-format DataFrame:
-      station_id | product | year | month | precip_mm_day
+    Load all precip_extraction_<PRODUCT>.csv files.
+    Skips yearly MERRA2 splits (_YYYY suffix).
+    Auto-detects the precipitation column in each file.
     """
-    # Match product-level CSVs only — not the yearly MERRA2 splits
     all_csvs = sorted(data_dir.glob("precip_extraction_*.csv"))
     product_csvs = [
         f for f in all_csvs
-        if not f.stem.split("_")[-1].isdigit()   # exclude _YYYY suffix
+        if not f.stem.split("_")[-1].isdigit()
     ]
 
     if not product_csvs:
         raise FileNotFoundError(
-            f"No product-level extraction CSVs found in {data_dir}\n"
-            f"  Expected: precip_extraction_CHIRPS.csv etc."
+            f"No product extraction CSVs in {data_dir}"
         )
 
-    expected = {
-        "CHIRPS", "ERA5_LAND", "GPM_IMERG",
-        "MERRA2", "PERSIANN_CDR", "TERRACLIMATE",
-    }
-
-    print(f"\n  Loading {len(product_csvs)} product extraction CSV(s):")
+    print(f"\n  Loading {len(product_csvs)} product CSV(s):")
     dfs = []
-    found_products = set()
 
     for csv_path in product_csvs:
         df = pd.read_csv(csv_path)
 
-        # Validate columns
-        required = {"station_id", "product", "year", "month", "precip_mm_day"}
-        missing  = required - set(df.columns)
-        if missing:
-            print(f"    ⚠  {csv_path.name} — missing columns: {missing}, skipping")
+        # Must have station_id, year, month at minimum
+        for req in ["station_id", "year", "month"]:
+            if req not in df.columns:
+                print(f"  ⚠  {csv_path.name}: missing '{req}' — skipping")
+                continue
+
+        # Auto-detect precip column
+        try:
+            pcol = _find_precip_col(df)
+        except ValueError as e:
+            print(f"  ⚠  {csv_path.name}: {e} — skipping")
             continue
 
+        if pcol != "precip_mm_day":
+            df = df.rename(columns={pcol: "precip_mm_day"})
+
+        # Get product name
+        if "product" not in df.columns:
+            # Infer from filename: precip_extraction_CHIRPS.csv → CHIRPS
+            parts = csv_path.stem.split("_")
+            df["product"] = "_".join(parts[2:]).upper()
+
         # Enforce types
-        df["year"]          = df["year"].astype(int)
-        df["month"]         = df["month"].astype(int)
-        df["precip_mm_day"] = pd.to_numeric(df["precip_mm_day"], errors="coerce")
+        df["year"]          = pd.to_numeric(df["year"],  errors="coerce")
+        df["month"]         = pd.to_numeric(df["month"], errors="coerce")
+        df["precip_mm_day"] = pd.to_numeric(df["precip_mm_day"],
+                                             errors="coerce")
+        df = df.dropna(subset=["year", "month"])
+        df["year"]  = df["year"].astype(int)
+        df["month"] = df["month"].astype(int)
 
         # Filter to study period
-        df = df[(df["year"] >= START_YEAR) & (df["year"] <= END_YEAR)]
+        df = df[
+            (df["year"] >= START_YEAR) &
+            (df["year"] <= END_YEAR)
+        ]
 
         products = df["product"].unique().tolist()
-        found_products.update(products)
-        dfs.append(df)
-        print(f"    ✓  {csv_path.name:<45}  "
+        print(f"  ✓  {csv_path.name:<45}  "
               f"{products}  {len(df):,} rows")
+        dfs.append(df[["station_id","product","year","month","precip_mm_day"]])
 
     if not dfs:
-        raise ValueError("No valid extraction CSVs loaded.")
+        raise ValueError("No valid extraction CSVs loaded")
 
-    grid_df = pd.concat(dfs, ignore_index=True)
-
-    # Report missing products
-    missing_products = expected - found_products
-    if missing_products:
-        print(f"\n  ⚠  Missing products (CSVs not found): {missing_products}")
-        print(f"     Merge will proceed with available products only.")
-
-    print(f"\n  Total extraction rows : {len(grid_df):,}")
-    print(f"  Products loaded       : {sorted(found_products)}")
-    return grid_df
+    out = pd.concat(dfs, ignore_index=True)
+    print(f"\n  Total rows: {len(out):,}")
+    print(f"  Products : {sorted(out['product'].unique())}")
+    return out
 
 
 # ════════════════════════════════════════════════════════════
-# § 3  LOAD STATION OBSERVATIONS
+# § 3  STATION OBSERVATIONS
 # ════════════════════════════════════════════════════════════
 
-def load_observations(stations_csv: str = None,
-                       obs_csv:      str = None) -> pd.DataFrame:
-    """
-    Load station observations.
+STATIONS_META = [
+    ("WA001", "Dakar",        -17.47,  14.73),
+    ("WA002", "Bamako",        -7.95,  12.65),
+    ("WA003", "Ouagadougou",   -1.52,  12.36),
+    ("WA004", "Niamey",         2.17,  13.51),
+    ("WA005", "Abuja",          7.33,   9.07),
+    ("WA006", "Accra",         -0.17,   5.56),
+    ("WA007", "Abidjan",       -3.93,   5.35),
+    ("WA008", "Conakry",      -13.67,   9.53),
+    ("WA009", "Freetown",     -13.23,   8.49),
+    ("WA010", "Monrovia",     -10.80,   6.30),
+    ("WA011", "Lomé",           1.22,   6.13),
+    ("WA012", "Cotonou",        2.42,   6.37),
+    ("WA013", "Kano",           8.52,  12.05),
+    ("WA014", "Kumasi",        -1.62,   6.69),
+    ("WA015", "Banjul",       -16.68,  13.45),
+]
 
-    Priority:
-      1. Real CSV files if paths are provided and exist
-      2. Demo synthetic observations generated locally
-         (same cosine formula as data_ingestion.py — no GEE needed)
 
-    Returns DataFrame: station_id, year, month, obs_mm_day
+def load_observations(stations_csv=None, obs_csv=None) -> pd.DataFrame:
     """
-    # Option 1: real CSV
+    Load gauge observations.
+    Falls back to reproducible demo data if no real CSV provided.
+    """
     if stations_csv and obs_csv:
-        s_path = Path(stations_csv)
-        o_path = Path(obs_csv)
-        if s_path.exists() and o_path.exists():
-            obs_df = pd.read_csv(o_path)
-            obs_df["year"]       = obs_df["year"].astype(int)
-            obs_df["month"]      = obs_df["month"].astype(int)
-            obs_df["obs_mm_day"] = obs_df["obs_mm_day"].astype(float)
-            print(f"\n   Real observations loaded: {len(obs_df):,} rows")
-            return obs_df
+        s = Path(stations_csv); o = Path(obs_csv)
+        if s.exists() and o.exists():
+            df = pd.read_csv(o)
+            df["year"]       = df["year"].astype(int)
+            df["month"]      = df["month"].astype(int)
+            df["obs_mm_day"] = df["obs_mm_day"].astype(float)
+            print(f"\n  Real observations: {len(df):,} rows")
+            return df
 
-    # Option 2: generate demo observations locally (no GEE)
-    print("\n  ℹ  Generating demo observations (no real gauge CSV provided)")
-    print("     Replace with real data by passing stations_csv and obs_csv paths")
-
-    STATIONS_META = [
-        ("WA001", "Dakar",        -17.47,  14.73),
-        ("WA002", "Bamako",        -7.95,  12.65),
-        ("WA003", "Ouagadougou",   -1.52,  12.36),
-        ("WA004", "Niamey",         2.17,  13.51),
-        ("WA005", "Abuja",          7.33,   9.07),
-        ("WA006", "Accra",         -0.17,   5.56),
-        ("WA007", "Abidjan",       -3.93,   5.35),
-        ("WA008", "Conakry",      -13.67,   9.53),
-        ("WA009", "Freetown",     -13.23,   8.49),
-        ("WA010", "Monrovia",     -10.80,   6.30),
-        ("WA011", "Lomé",           1.22,   6.13),
-        ("WA012", "Cotonou",        2.42,   6.37),
-        ("WA013", "Kano",           8.52,  12.05),
-        ("WA014", "Kumasi",        -1.62,   6.69),
-        ("WA015", "Banjul",       -16.68,  13.45),
-    ]
-
+    print("\n  Using demo observations (synthetic — replace with real gauge data)")
     rng  = np.random.default_rng(seed=42)
     rows = []
     for sid, name, lon, lat in STATIONS_META:
         for yr in range(START_YEAR, END_YEAR + 1):
             for mo in range(1, 13):
                 phase = (mo - 8) if lat > 10 else (mo - 6)
-                amp   = 4.0     if lat > 10 else 7.0
+                amp   = 4.0 if lat > 10 else 7.0
                 obs   = max(0.0,
                     0.5 + amp * max(0.0, np.cos(phase * np.pi / 3))
                         + rng.normal(0, 1.25))
@@ -265,62 +311,62 @@ def load_observations(stations_csv: str = None,
                     "month"      : mo,
                     "obs_mm_day" : round(float(obs), 2),
                 })
-
-    obs_df = pd.DataFrame(rows)
-    print(f"  Demo observations: {len(obs_df):,} rows  "
-          f"({START_YEAR}–{END_YEAR}, {len(STATIONS_META)} stations)")
-    return obs_df
+    df = pd.DataFrame(rows)
+    print(f"  Demo: {len(df):,} rows  "
+          f"({len(STATIONS_META)} stations × {END_YEAR-START_YEAR+1} yrs × 12 mo)")
+    return df
 
 
 # ════════════════════════════════════════════════════════════
 # § 4  PIVOT AND MERGE
 # ════════════════════════════════════════════════════════════
 
-def build_merged_dataset(grid_df:  pd.DataFrame,
-                          obs_df:   pd.DataFrame,
-                          out_path: Path) -> pd.DataFrame:
+def build_merged(grid_df: pd.DataFrame,
+                  obs_df:  pd.DataFrame,
+                  out_path: Path) -> pd.DataFrame:
     """
-    Pivot grid_df from long to wide format, then inner-join
-    with obs_df on station_id + year + month.
-
-    Output columns:
-      station_id | year | month | obs_mm_day |
-      CHIRPS | ERA5_LAND | GPM_IMERG | MERRA2 | PERSIANN_CDR | TERRACLIMATE
+    Pivot grid from long → wide, inner-join with observations.
     """
-    print("\n  Pivoting extraction data to wide format …")
-    grid_wide = grid_df.pivot_table(
+    print("\n  Pivoting to wide format...")
+    wide = grid_df.pivot_table(
         index   = ["station_id", "year", "month"],
         columns = "product",
         values  = "precip_mm_day",
-        aggfunc = "mean",   # take mean if duplicates exist
+        aggfunc = "mean",
     ).reset_index()
-    grid_wide.columns.name = None
+    wide.columns.name = None
+    print(f"  Wide shape: {wide.shape}")
 
-    print(f"  Wide format shape: {grid_wide.shape}")
-    print(f"  Product columns  : {[c for c in grid_wide.columns if c not in ['station_id','year','month']]}")
+    product_cols = [c for c in wide.columns
+                    if c not in ["station_id","year","month"]]
+    print(f"  Products  : {product_cols}")
 
-    print("\n  Merging with observations (inner join) …")
+    # Check completeness
+    for p in product_cols:
+        nan_pct = 100 * wide[p].isna().sum() / len(wide)
+        flag = "⚠" if nan_pct > 20 else "✓"
+        print(f"    {flag}  {p:<18} NaN={nan_pct:.1f}%")
+
+    print("\n  Merging with observations...")
     merged = obs_df.merge(
-        grid_wide,
-        on  = ["station_id", "year", "month"],
-        how = "inner",
+        wide, on=["station_id","year","month"], how="inner"
     )
-
     merged.to_csv(out_path, index=False)
 
-    print(f"\n   Merged dataset saved → {out_path.name}")
-    print(f"     Shape    : {merged.shape}")
-    print(f"     Columns  : {list(merged.columns)}")
-    print(f"     Stations : {merged['station_id'].nunique()}")
-    print(f"     Years    : {merged['year'].min()}–{merged['year'].max()}")
+    print(f"\n  ✅ Saved → {out_path.name}")
+    print(f"     Shape   : {merged.shape}")
+    print(f"     Columns : {list(merged.columns)}")
+    print(f"     Stations: {merged['station_id'].nunique()}")
+    print(f"     Years   : {merged['year'].min()}–{merged['year'].max()}")
 
-    # Summary statistics per product
-    print("\n  ── Summary statistics (mean mm/day per product) ──")
-    product_cols = [c for c in merged.columns
-                    if c not in ["station_id", "year", "month", "obs_mm_day"]]
-    summary = merged[["obs_mm_day"] + product_cols].describe().loc[["mean","std","min","max"]]
-    print(summary.round(3).to_string())
-
+    # NaN summary
+    print("\n  NaN per product in merged file:")
+    for p in product_cols:
+        if p in merged.columns:
+            n = merged[p].isna().sum()
+            pct = 100*n/len(merged)
+            flag = "⚠" if pct > 5 else "✓"
+            print(f"    {flag}  {p:<18} NaN={n} ({pct:.1f}%)")
     return merged
 
 
@@ -330,53 +376,36 @@ def build_merged_dataset(grid_df:  pd.DataFrame,
 
 if __name__ == "__main__":
 
-    # ── Step 1: Merge MERRA2 yearly CSVs ─────────────────────
-    print("─" * 60)
-    print("  STEP 1: Merging MERRA2 yearly CSVs")
-    print("─" * 60)
+    # Step 1: Rebuild MERRA2
+    print("\n" + "─"*60)
+    print("  STEP 1: Rebuilding MERRA2 from yearly splits")
+    print("─"*60)
+    rebuild_merra2(DATA_DIR, START_YEAR, END_YEAR)
 
-    merra2_merged = merge_merra2_yearly(DATA_DIR, START_YEAR, END_YEAR)
-
-    # ── Step 2: Load all product extraction CSVs ──────────────
-    print("\n" + "─" * 60)
+    # Step 2: Load all products
+    print("\n" + "─"*60)
     print("  STEP 2: Loading all product extraction CSVs")
-    print("─" * 60)
-
+    print("─"*60)
     grid_df = load_extraction_csvs(DATA_DIR)
 
-    # ── Step 3: Load observations ─────────────────────────────
-    print("\n" + "─" * 60)
-    print("  STEP 3: Loading station observations")
-    print("─" * 60)
-
+    # Step 3: Observations
+    print("\n" + "─"*60)
+    print("  STEP 3: Loading observations")
+    print("─"*60)
     obs_df = load_observations(
-        # Uncomment and set paths when real gauge data is available:
+        # Uncomment when real gauge data available:
         # stations_csv = str(DATA_DIR / "wa_gauge_stations.csv"),
         # obs_csv      = str(DATA_DIR / "wa_gauge_obs_2001_2020.csv"),
     )
 
-    # ── Step 4: Build merged dataset ──────────────────────────
-    print("\n" + "─" * 60)
-    print("  STEP 4: Building merged dataset")
-    print("─" * 60)
-
+    # Step 4: Build merged dataset
+    print("\n" + "─"*60)
+    print("  STEP 4: Building merged_obs_grid.csv")
+    print("─"*60)
     out_path = DATA_DIR / "merged_obs_grid.csv"
-    merged   = build_merged_dataset(grid_df, obs_df, out_path)
+    merged   = build_merged(grid_df, obs_df, out_path)
 
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
     print("  MERGE COMPLETE")
-    print("=" * 60)
-    print(f"""
-  Output file : {out_path}
-  Rows        : {len(merged):,}
-  Products    : {[c for c in merged.columns if c not in ['station_id','year','month','obs_mm_day']]}
-
-  NEXT STEPS:
-  ─────────────────────────────────────────────────────
-  1. Inspect merged_obs_grid.csv in Excel or pandas
-  2. Run validation metrics against real gauge data
-     (replace demo obs by uncommenting stations_csv/obs_csv above)
-  3. Use merged dataset for r, PBIAS, NSE, KGE computation
-     per station, per product, per ecological zone
-  ─────────────────────────────────────────────────────
-    """)
+    print("="*60)
+    print("  NEXT: python validation_metrics.py")

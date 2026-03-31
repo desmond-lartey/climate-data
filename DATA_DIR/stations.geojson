@@ -1,0 +1,22 @@
+{
+"type": "FeatureCollection",
+"name": "stations",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "station_id": "WA001", "station_name": "Dakar", "lon": -17.47, "lat": 14.73, "elevation_m": 27, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -17.47, 14.73 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA002", "station_name": "Bamako", "lon": -7.95, "lat": 12.65, "elevation_m": 381, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -7.95, 12.65 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA003", "station_name": "Ouagadougou", "lon": -1.52, "lat": 12.36, "elevation_m": 306, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -1.52, 12.36 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA004", "station_name": "Niamey", "lon": 2.17, "lat": 13.51, "elevation_m": 222, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ 2.17, 13.51 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA005", "station_name": "Abuja", "lon": 7.33, "lat": 9.07, "elevation_m": 476, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ 7.33, 9.07 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA006", "station_name": "Accra", "lon": -0.17, "lat": 5.56, "elevation_m": 61, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -0.17, 5.56 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA007", "station_name": "Abidjan", "lon": -3.93, "lat": 5.35, "elevation_m": 7, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -3.93, 5.35 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA008", "station_name": "Conakry", "lon": -13.67, "lat": 9.53, "elevation_m": 27, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -13.67, 9.53 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA009", "station_name": "Freetown", "lon": -13.23, "lat": 8.49, "elevation_m": 27, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -13.23, 8.49 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA010", "station_name": "Monrovia", "lon": -10.8, "lat": 6.3, "elevation_m": 23, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -10.8, 6.3 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA011", "station_name": "Lomé", "lon": 1.22, "lat": 6.13, "elevation_m": 25, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ 1.22, 6.13 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA012", "station_name": "Cotonou", "lon": 2.42, "lat": 6.37, "elevation_m": 9, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ 2.42, 6.37 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA013", "station_name": "Kano", "lon": 8.52, "lat": 12.05, "elevation_m": 481, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ 8.52, 12.05 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA014", "station_name": "Kumasi", "lon": -1.62, "lat": 6.69, "elevation_m": 287, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -1.62, 6.69 ] } },
+{ "type": "Feature", "properties": { "station_id": "WA015", "station_name": "Banjul", "lon": -16.68, "lat": 13.45, "elevation_m": 28, "source": "demo" }, "geometry": { "type": "Point", "coordinates": [ -16.68, 13.45 ] } }
+]
+}
