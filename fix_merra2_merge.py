@@ -40,7 +40,7 @@ for csv_path in yearly_csvs:
     dfs.append(df)
 
 if not dfs:
-    print("❌ No data loaded!")
+    print(" No data loaded!")
 else:
     combined = pd.concat(dfs, ignore_index=True)
     
@@ -61,7 +61,7 @@ else:
     out = DATA_DIR / "precip_extraction_MERRA2.csv"
     combined.to_csv(out, index=False)
     
-    print(f"\n  ✅ Saved: {out.name}")
+    print(f"\n   Saved: {out.name}")
     print(f"     Rows    : {len(combined):,}")
     print(f"     Expected: {(END_YEAR-START_YEAR+1) * 12 * 15} "
           f"({END_YEAR-START_YEAR+1} yrs × 12 mo × 15 stations)")

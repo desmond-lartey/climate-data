@@ -28,7 +28,7 @@ def run_step(script: str, label: str):
     result = subprocess.run([sys.executable, script],
                             capture_output=False, text=True)
     elapsed = time.time() - t0
-    status = " OK" if result.returncode == 0 else "❌ FAILED"
+    status = " OK" if result.returncode == 0 else " FAILED"
     print(f"\n  {status}  ({elapsed:.1f}s)")
     return result.returncode == 0
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     print("  PIPELINE SUMMARY")
     print("="*60)
     for script, ok in results.items():
-        mark = "" if ok else "❌"
+        mark = "" if ok else ""
         print(f"  {mark}  {script}")
 
     all_ok = all(results.values())

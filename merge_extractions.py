@@ -11,8 +11,13 @@ WHAT THIS SCRIPT DOES
 ──────────────────────
 1. Rebuilds the merged MERRA2 CSV correctly from yearly splits
 2. Loads all 6 product extraction CSVs
-3. Loads station observations (demo or real)
+3. Loads station observations (GPCC real or synthetic demo)
 4. Produces merged_obs_grid.csv
+
+OBSERVATION SOURCE — change this one flag:
+──────────────────────────────────────────
+  USE_REAL_OBS = True   → uses gpcc_obs_2001_2020.csv (for paper)
+  USE_REAL_OBS = False  → uses synthetic demo data (for testing)
 
 HOW TO RUN
 ───────────
@@ -30,11 +35,18 @@ DATA_DIR   = Path(CONFIG["data_dir"])
 START_YEAR = int(CONFIG["start_date"][:4])   # 2001
 END_YEAR   = int(CONFIG["end_date"][:4])     # 2020
 
+# ── Observation source switch ─────────────────────────────
+# Set True  → use real GPCC observations (gpcc_obs_2001_2020.csv)
+# Set False → use synthetic demo data (for pipeline testing)
+USE_REAL_OBS = True
+GPCC_OBS_CSV = DATA_DIR / "gpcc_obs_2001_2020.csv"
+
 print("=" * 60)
 print("  LOCAL MERGE — Precipitation Assessment")
 print("=" * 60)
 print(f"  DATA_DIR    : {DATA_DIR}")
 print(f"  Study period: {START_YEAR}–{END_YEAR}")
+print(f"  Observations: {'GPCC real' if USE_REAL_OBS else 'Synthetic demo'}")
 
 
 # ════════════════════════════════════════════════════════════
@@ -64,7 +76,6 @@ def _find_precip_col(df: pd.DataFrame) -> str:
         )
     if len(candidates) == 1:
         return candidates[0]
-    # Prefer columns with "precip" or "mm" in the name
     for pref in ["precip_mm_day", "precip", "mm_day", "precipitation",
                  "value", "mean"]:
         for c in candidates:
@@ -77,18 +88,17 @@ def _find_precip_col(df: pd.DataFrame) -> str:
 # § 1  REBUILD MERRA2 FROM YEARLY SPLITS
 # ════════════════════════════════════════════════════════════
 
-def rebuild_merra2(data_dir: Path,
-                   start: int, end: int) -> Path:
+def rebuild_merra2(data_dir: Path, start: int, end: int) -> Path:
     """
     Rebuild precip_extraction_MERRA2.csv from yearly split files.
 
-    Each yearly file (e.g. MERRA2_2005.csv) was exported from GEE
-    containing ALL years × 15 stations × 12 months, but only the rows
-    for the file's own year have real values — the rest are NaN.
+    Each yearly file was exported from GEE containing ALL years ×
+    15 stations × 12 months, but only rows for the file's own year
+    have real values — the rest are NaN placeholders.
     Concatenating naively creates 22× duplicate NaN rows.
 
     Fix:
-      1. Detect the actual precip column (auto-detect)
+      1. Auto-detect the actual precip column
       2. Drop NaN rows BEFORE concatenating
       3. Keep only rows whose year matches the filename year
       4. Deduplicate on station_id + year + month
@@ -109,41 +119,34 @@ def rebuild_merra2(data_dir: Path,
 
         df = pd.read_csv(csv_path)
 
-        # Auto-detect the precipitation column
         try:
             pcol = _find_precip_col(df)
         except ValueError as e:
             print(f"  ⚠  {csv_path.name}: {e} — skipping")
             continue
 
-        # Rename to standard name
         if pcol != "precip_mm_day":
             df = df.rename(columns={pcol: "precip_mm_day"})
 
-        # Drop rows where precip is NaN (other years' placeholder rows)
         df = df.dropna(subset=["precip_mm_day"])
 
-        # Keep only rows that belong to this file's year
         if "year" in df.columns:
             df = df[df["year"].astype(int) == yr]
 
-        # Ensure correct types
         df["year"]          = df["year"].astype(int)
         df["month"]         = df["month"].astype(int)
         df["precip_mm_day"] = pd.to_numeric(df["precip_mm_day"],
                                              errors="coerce")
 
-        # Keep only needed columns
         keep = ["station_id", "product", "year", "month", "precip_mm_day"]
         df = df[[c for c in keep if c in df.columns]]
 
-        # Fill product column if missing
         if "product" not in df.columns:
             df["product"] = "MERRA2"
 
-        n = len(df)
-        expected = 15 * 12   # 15 stations × 12 months
-        flag = "✓" if n >= expected * 0.9 else "⚠"
+        n        = len(df)
+        expected = 15 * 12
+        flag     = "✓" if n >= expected * 0.9 else "⚠"
         print(f"  {flag}  {csv_path.name}  → {n} rows "
               f"(expected ~{expected})")
         dfs.append(df)
@@ -154,16 +157,13 @@ def rebuild_merra2(data_dir: Path,
 
     combined = pd.concat(dfs, ignore_index=True)
 
-    # Deduplicate
     before = len(combined)
-    combined = combined.drop_duplicates(
-        subset=["station_id", "year", "month"]
-    )
+    combined = combined.drop_duplicates(subset=["station_id","year","month"])
     if before != len(combined):
         print(f"  Removed {before - len(combined)} duplicate rows")
 
     combined = combined.sort_values(
-        ["year", "month", "station_id"]
+        ["year","month","station_id"]
     ).reset_index(drop=True)
 
     out = data_dir / "precip_extraction_MERRA2.csv"
@@ -188,7 +188,7 @@ def load_extraction_csvs(data_dir: Path) -> pd.DataFrame:
     Skips yearly MERRA2 splits (_YYYY suffix).
     Auto-detects the precipitation column in each file.
     """
-    all_csvs = sorted(data_dir.glob("precip_extraction_*.csv"))
+    all_csvs     = sorted(data_dir.glob("precip_extraction_*.csv"))
     product_csvs = [
         f for f in all_csvs
         if not f.stem.split("_")[-1].isdigit()
@@ -205,13 +205,12 @@ def load_extraction_csvs(data_dir: Path) -> pd.DataFrame:
     for csv_path in product_csvs:
         df = pd.read_csv(csv_path)
 
-        # Must have station_id, year, month at minimum
-        for req in ["station_id", "year", "month"]:
-            if req not in df.columns:
-                print(f"  ⚠  {csv_path.name}: missing '{req}' — skipping")
-                continue
+        missing_req = [r for r in ["station_id","year","month"]
+                       if r not in df.columns]
+        if missing_req:
+            print(f"  ⚠  {csv_path.name}: missing {missing_req} — skipping")
+            continue
 
-        # Auto-detect precip column
         try:
             pcol = _find_precip_col(df)
         except ValueError as e:
@@ -221,30 +220,22 @@ def load_extraction_csvs(data_dir: Path) -> pd.DataFrame:
         if pcol != "precip_mm_day":
             df = df.rename(columns={pcol: "precip_mm_day"})
 
-        # Get product name
         if "product" not in df.columns:
-            # Infer from filename: precip_extraction_CHIRPS.csv → CHIRPS
             parts = csv_path.stem.split("_")
             df["product"] = "_".join(parts[2:]).upper()
 
-        # Enforce types
         df["year"]          = pd.to_numeric(df["year"],  errors="coerce")
         df["month"]         = pd.to_numeric(df["month"], errors="coerce")
         df["precip_mm_day"] = pd.to_numeric(df["precip_mm_day"],
                                              errors="coerce")
-        df = df.dropna(subset=["year", "month"])
+        df = df.dropna(subset=["year","month"])
         df["year"]  = df["year"].astype(int)
         df["month"] = df["month"].astype(int)
 
-        # Filter to study period
-        df = df[
-            (df["year"] >= START_YEAR) &
-            (df["year"] <= END_YEAR)
-        ]
+        df = df[(df["year"] >= START_YEAR) & (df["year"] <= END_YEAR)]
 
         products = df["product"].unique().tolist()
-        print(f"  ✓  {csv_path.name:<45}  "
-              f"{products}  {len(df):,} rows")
+        print(f"  ✓  {csv_path.name:<45}  {products}  {len(df):,} rows")
         dfs.append(df[["station_id","product","year","month","precip_mm_day"]])
 
     if not dfs:
@@ -276,25 +267,12 @@ STATIONS_META = [
     ("WA013", "Kano",           8.52,  12.05),
     ("WA014", "Kumasi",        -1.62,   6.69),
     ("WA015", "Banjul",       -16.68,  13.45),
+    ("WA016", "Tamanrasset", 5.53, 22.79),  # Algeria — deep Sahara
 ]
 
 
-def load_observations(stations_csv=None, obs_csv=None) -> pd.DataFrame:
-    """
-    Load gauge observations.
-    Falls back to reproducible demo data if no real CSV provided.
-    """
-    if stations_csv and obs_csv:
-        s = Path(stations_csv); o = Path(obs_csv)
-        if s.exists() and o.exists():
-            df = pd.read_csv(o)
-            df["year"]       = df["year"].astype(int)
-            df["month"]      = df["month"].astype(int)
-            df["obs_mm_day"] = df["obs_mm_day"].astype(float)
-            print(f"\n  Real observations: {len(df):,} rows")
-            return df
-
-    print("\n  Using demo observations (synthetic — replace with real gauge data)")
+def _make_demo_obs() -> pd.DataFrame:
+    """Generate reproducible synthetic observations (pipeline testing only)."""
     rng  = np.random.default_rng(seed=42)
     rows = []
     for sid, name, lon, lat in STATIONS_META:
@@ -306,14 +284,56 @@ def load_observations(stations_csv=None, obs_csv=None) -> pd.DataFrame:
                     0.5 + amp * max(0.0, np.cos(phase * np.pi / 3))
                         + rng.normal(0, 1.25))
                 rows.append({
-                    "station_id" : sid,
-                    "year"       : yr,
-                    "month"      : mo,
-                    "obs_mm_day" : round(float(obs), 2),
+                    "station_id": sid,
+                    "year"      : yr,
+                    "month"     : mo,
+                    "obs_mm_day": round(float(obs), 2),
                 })
-    df = pd.DataFrame(rows)
-    print(f"  Demo: {len(df):,} rows  "
-          f"({len(STATIONS_META)} stations × {END_YEAR-START_YEAR+1} yrs × 12 mo)")
+    return pd.DataFrame(rows)
+
+
+def load_observations(use_real: bool = True,
+                       obs_csv: Path  = None) -> pd.DataFrame:
+    """
+    Load gauge observations.
+
+    Parameters
+    ──────────
+    use_real : if True, load real GPCC observations from obs_csv
+               if False, generate synthetic demo data
+    obs_csv  : path to gpcc_obs_2001_2020.csv (used when use_real=True)
+
+    Returns DataFrame: station_id | year | month | obs_mm_day
+    """
+    if use_real:
+        if obs_csv is None or not Path(obs_csv).exists():
+            print(f"  ⚠  GPCC obs file not found: {obs_csv}")
+            print("     Run download_gpcc.py first, or set USE_REAL_OBS=False")
+            print("     Falling back to synthetic demo data")
+        else:
+            df = pd.read_csv(obs_csv)
+            df["year"]       = df["year"].astype(int)
+            df["month"]      = df["month"].astype(int)
+            df["obs_mm_day"] = df["obs_mm_day"].astype(float)
+
+            # Filter to study period
+            df = df[(df["year"] >= START_YEAR) & (df["year"] <= END_YEAR)]
+
+            print(f"\n  ✅ Real GPCC observations loaded: {Path(obs_csv).name}")
+            print(f"     Rows     : {len(df):,}")
+            print(f"     Years    : {df['year'].min()}–{df['year'].max()}")
+            print(f"     Stations : {sorted(df['station_id'].unique())}")
+            print(f"     Mean obs : {df['obs_mm_day'].mean():.3f} mm/day")
+            print(f"     NaN      : {df['obs_mm_day'].isna().sum()}")
+            return df
+
+    # Synthetic demo fallback
+    print("\n  ℹ  Using SYNTHETIC demo observations")
+    print("     (set USE_REAL_OBS=True and run download_gpcc.py for paper results)")
+    df = _make_demo_obs()
+    print(f"     Rows: {len(df):,}  "
+          f"({len(STATIONS_META)} stations × "
+          f"{END_YEAR - START_YEAR + 1} yrs × 12 mo)")
     return df
 
 
@@ -324,12 +344,10 @@ def load_observations(stations_csv=None, obs_csv=None) -> pd.DataFrame:
 def build_merged(grid_df: pd.DataFrame,
                   obs_df:  pd.DataFrame,
                   out_path: Path) -> pd.DataFrame:
-    """
-    Pivot grid from long → wide, inner-join with observations.
-    """
+    """Pivot grid from long → wide, inner-join with observations."""
     print("\n  Pivoting to wide format...")
     wide = grid_df.pivot_table(
-        index   = ["station_id", "year", "month"],
+        index   = ["station_id","year","month"],
         columns = "product",
         values  = "precip_mm_day",
         aggfunc = "mean",
@@ -341,16 +359,13 @@ def build_merged(grid_df: pd.DataFrame,
                     if c not in ["station_id","year","month"]]
     print(f"  Products  : {product_cols}")
 
-    # Check completeness
     for p in product_cols:
         nan_pct = 100 * wide[p].isna().sum() / len(wide)
-        flag = "⚠" if nan_pct > 20 else "✓"
+        flag    = "⚠" if nan_pct > 20 else "✓"
         print(f"    {flag}  {p:<18} NaN={nan_pct:.1f}%")
 
     print("\n  Merging with observations...")
-    merged = obs_df.merge(
-        wide, on=["station_id","year","month"], how="inner"
-    )
+    merged = obs_df.merge(wide, on=["station_id","year","month"], how="inner")
     merged.to_csv(out_path, index=False)
 
     print(f"\n  ✅ Saved → {out_path.name}")
@@ -359,12 +374,11 @@ def build_merged(grid_df: pd.DataFrame,
     print(f"     Stations: {merged['station_id'].nunique()}")
     print(f"     Years   : {merged['year'].min()}–{merged['year'].max()}")
 
-    # NaN summary
     print("\n  NaN per product in merged file:")
     for p in product_cols:
         if p in merged.columns:
-            n = merged[p].isna().sum()
-            pct = 100*n/len(merged)
+            n   = merged[p].isna().sum()
+            pct = 100 * n / len(merged)
             flag = "⚠" if pct > 5 else "✓"
             print(f"    {flag}  {p:<18} NaN={n} ({pct:.1f}%)")
     return merged
@@ -393,9 +407,8 @@ if __name__ == "__main__":
     print("  STEP 3: Loading observations")
     print("─"*60)
     obs_df = load_observations(
-        # Uncomment when real gauge data available:
-        # stations_csv = str(DATA_DIR / "wa_gauge_stations.csv"),
-        # obs_csv      = str(DATA_DIR / "wa_gauge_obs_2001_2020.csv"),
+        use_real = USE_REAL_OBS,
+        obs_csv  = GPCC_OBS_CSV,
     )
 
     # Step 4: Build merged dataset
@@ -408,4 +421,6 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("  MERGE COMPLETE")
     print("="*60)
+    print(f"  Observations used: "
+          f"{'GPCC real' if USE_REAL_OBS else 'Synthetic demo'}")
     print("  NEXT: python validation_metrics.py")

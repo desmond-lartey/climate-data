@@ -47,13 +47,13 @@ for yr in STUDY_YEARS:
         ee.Image(asset_id).bandNames().getInfo()
         print(f"     {yr}  →  {asset_id}")
     except Exception:
-        print(f"    ❌ {yr}  →  MISSING: {asset_id}")
+        print(f"     {yr}  →  MISSING: {asset_id}")
         missing_years.append(yr)
 
 if missing_years:
     print(f"""
   ══════════════════════════════════════════════════════
-  ❌  MERGE ABORTED — {len(missing_years)} yearly asset(s) missing
+    MERGE ABORTED — {len(missing_years)} yearly asset(s) missing
   ══════════════════════════════════════════════════════
   Missing years: {missing_years}
 

@@ -410,7 +410,7 @@ def merge_merra2_extraction_csvs(data_dir:    str = None,
     yearly_csvs = sorted(d.glob("precip_extraction_MERRA2_*.csv"))
 
     if not yearly_csvs:
-        print(f"  ❌ No MERRA2 yearly CSVs found in {d}")
+        print(f"   No MERRA2 yearly CSVs found in {d}")
         print(f"     Expected: precip_extraction_MERRA2_2001.csv etc.")
         return
 
@@ -535,7 +535,7 @@ if __name__ == "__main__":
     #  TERRACLIMATE     YES            In DATA_DIR
     #  PERSIANN_CDR     YES            In DATA_DIR
     #  CHIRPS          ⏳ NO             → Re-submit (task below)
-    #  MERRA2          ❌ Timed out      → Yearly split (task below)
+    #  MERRA2           Timed out      → Yearly split (task below)
 
     # Products whose CSVs are already downloaded and in DATA_DIR
     COMPLETED_EXTRACTION = [

@@ -452,7 +452,7 @@ for pname in PRODUCTS:
         resampled   = resample_to_common(monthly_ic)
         COLLECTIONS[pname] = resampled
     except Exception as exc:
-        print(f"    ❌ Failed to build {pname}: {exc}")
+        print(f"     Failed to build {pname}: {exc}")
 
 print(f"\n Collections built: {list(COLLECTIONS.keys())}")
 

@@ -20,7 +20,7 @@ try:
     print(f"   geopandas {gpd.__version__} available")
     HAS_GP = True
 except ImportError as e:
-    print(f"  ❌ geopandas NOT available: {e}")
+    print(f"   geopandas NOT available: {e}")
     HAS_GP = False
 
 # 2. Check shapely
@@ -29,7 +29,7 @@ try:
     import shapely
     print(f"   shapely {shapely.__version__} available")
 except ImportError as e:
-    print(f"  ❌ shapely NOT available: {e}")
+    print(f"   shapely NOT available: {e}")
 
 # 3. Find ecological zones files
 print("\n[3] Searching for ecological zone files...")
@@ -49,7 +49,7 @@ for d in search_dirs:
         print(f"  ⚠  Dir not found: {d}")
 
 if not found_files:
-    print("  ❌ No zone files found!")
+    print("   No zone files found!")
 
 # 4. Try loading each file and test containment
 print("\n[4] Testing zone file loading + point-in-polygon...")
@@ -97,7 +97,7 @@ if HAS_GP and found_files:
                 
                 print(f"    {stn} ({lon:7.2f}, {lat:.2f})  {result}")
         except Exception as e:
-            print(f"  ❌ Error loading {fpath.name}: {e}")
+            print(f"   Error loading {fpath.name}: {e}")
             import traceback
             traceback.print_exc()
 
@@ -113,7 +113,7 @@ if merged_path.exists():
     print(f"  First rows:")
     print(df.head(3).to_string())
 else:
-    print(f"  ❌ Not found at {merged_path}")
+    print(f"   Not found at {merged_path}")
 
 # 6. Check validation_by_zone.csv
 print("\n[6] Checking existing validation_by_zone.csv...")

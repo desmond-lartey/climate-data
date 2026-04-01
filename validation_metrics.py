@@ -87,6 +87,7 @@ STATION_COORDS = {
     "WA013": (  8.52, 12.05),  # Kano, Nigeria
     "WA014": ( -1.62,  6.69),  # Kumasi, Ghana
     "WA015": (-16.68, 13.45),  # Banjul, Gambia
+    "WA016": (5.53, 22.79),   # Tamanrasset, Algeria
 }
 
 # ── MANUAL ZONE OVERRIDE ──────────────────────────────────
@@ -118,6 +119,7 @@ STATION_ZONE_OVERRIDE = {
     "WA007": "Guineo-Congolean",  # Abidjan 5.35°N, ~1800 mm/yr
     "WA011": "Guineo-Congolean",  # Lomé 6.13°N, ~900 mm/yr
     "WA012": "Guineo-Congolean",  # Cotonou 6.37°N, ~1300 mm/yr
+    "WA016": "Saharian",      # Tamanrasset 22.79°N, ~25 mm/yr
 }
 
 ZONE_ORDER = [

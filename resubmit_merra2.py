@@ -129,7 +129,7 @@ for yr in range(START_YEAR, END_YEAR + 1):
               f"(asset: climatology_MERRA2_{yr})")
 
     except Exception as e:
-        print(f"  ❌  Year {yr} failed: {e}")
+        print(f"    Year {yr} failed: {e}")
 
 print(f"\n  {len(tasks)} tasks submitted successfully.")
 print(f"  Monitor: https://code.earthengine.google.com/tasks")
