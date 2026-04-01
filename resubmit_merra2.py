@@ -48,6 +48,7 @@ STATIONS = {
     "WA013": (  8.52,  12.05),
     "WA014": ( -1.62,   6.69),
     "WA015": (-16.68,  13.45),
+    "WA016": (-15.97, 18.07),   # Nouakchott, Mauritania — deep Sahara
 }
 
 # Build station FeatureCollection

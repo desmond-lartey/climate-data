@@ -21,7 +21,7 @@ TARGET_SCALE = 27830
 # Single station FeatureCollection
 WA016_FC = ee.FeatureCollection([
     ee.Feature(
-        ee.Geometry.Point([5.53, 22.79]),
+        ee.Geometry.Point([-15.97, 18.07]),  # ← Nouakchott
         {"station_id": "WA016"}
     )
 ])

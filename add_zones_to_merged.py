@@ -89,7 +89,7 @@ STATION_ZONE = {
     "WA013": "Soudanian",        # Kano          12.05°N ~860  mm/yr
     "WA014": "Guinean",          # Kumasi         6.69°N ~1500 mm/yr
     "WA015": "Sahelian",         # Banjul        13.45°N ~1000 mm/yr
-    "WA016": "Saharian",        # Tamanrasset   22.79°N ~25   mm/yr
+    "WA016": "Saharian",        # 18.07°N — just above 18° threshold
 }
 
 

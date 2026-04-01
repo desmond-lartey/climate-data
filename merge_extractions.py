@@ -267,7 +267,7 @@ STATIONS_META = [
     ("WA013", "Kano",           8.52,  12.05),
     ("WA014", "Kumasi",        -1.62,   6.69),
     ("WA015", "Banjul",       -16.68,  13.45),
-    ("WA016", "Tamanrasset", 5.53, 22.79),  # Algeria — deep Sahara
+    ("WA016", "Nouakchott",  -15.97, 18.07),  # Mauritania — deep Sahara
 ]
 
 
