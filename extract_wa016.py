@@ -18,7 +18,7 @@ ee.Initialize(project="ee-desmond")
 DRIVE_FOLDER = CONFIG.get("drive_folder", "GEE_Exports")
 TARGET_SCALE = 27830
 
-# Single station FeatureCollection
+# Single station FeatureCollection 
 WA016_FC = ee.FeatureCollection([
     ee.Feature(
         ee.Geometry.Point([-15.97, 18.07]),  # ← Nouakchott
@@ -31,7 +31,7 @@ print("  WA016 EXTRACTION (sampleRegions)")
 print("=" * 60)
 
 tasks = {}
-for pname, ic in COLLECTIONS.items():
+for pname, ic in COLLECTIONS.items(): 
 
     # Filter to study period
     ic_filtered = ic.filter(
