@@ -24,7 +24,7 @@ WA016_FC = ee.FeatureCollection([
         ee.Geometry.Point([-15.97, 18.07]),  # ← Nouakchott
         {"station_id": "WA016"}
     )
-])
+]) 
 
 print("=" * 60)
 print("  WA016 EXTRACTION (sampleRegions)")
