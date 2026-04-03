@@ -1,0 +1,13 @@
+system:index,month,precip_mm_day,product,station_id,year,.geo
+1_1_1_1_1_1_1_1_1_1_1_0_0,1,0.005007908,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_1_1_1_1_1_1_2_0_0,2,0.0014729333,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_1_1_1_1_1_2_0_0,3,0.0041891835,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_1_1_1_1_2_0_0,4,3.3451756E-4,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_1_1_1_2_0_0,5,2.2038122E-8,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_1_1_2_0_0,6,1.940973E-6,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_1_2_0_0,7,0.061121956,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_1_2_0_0,8,0.18660846,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_1_2_0_0,9,0.3117739,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_1_2_0_0,10,5.0725247E-4,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1_2_0_0,11,0.20023675,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"
+2_0_0,12,5.0867427E-5,MERRA2,WA016,2004,"{""type"":""MultiPoint"",""coordinates"":[]}"

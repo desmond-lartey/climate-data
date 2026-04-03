@@ -10,7 +10,7 @@ Produces publication-quality figures:
   Fig 2  – Metric heatmap
   Fig 3  – Scatter plots (obs vs product)
   Fig 4  – Seasonal box plots
-  Fig 5  – Annual cycle by product
+  Fig 5  – product
   Fig 6  – Time series at selected stations
   Fig 7  – Zonal metric heatmap (per ecological zone)
   Fig 8  – Zonal annual cycle (one panel per zone)
@@ -352,7 +352,7 @@ def plot_annual_cycle(merged_df: pd.DataFrame,
     ax.set_xlabel("Month")
     ax.set_ylabel("Precipitation (mm/day)")
     ax.set_title("Mean Annual Cycle — All Products vs Observations\n"
-                 "West Africa 2001–2020 (15 stations pooled)")
+                 "West Africa 2001–2020 (16 stations pooled)")
     ax.legend(fontsize=9, ncol=2, framealpha=0.9)
     ax.grid(True, alpha=0.25)
     fig.tight_layout()
@@ -455,61 +455,55 @@ def plot_zonal_metric_heatmap(zone_df: pd.DataFrame,
 # Fig 8 — Zonal annual cycle (one panel per zone)
 # ════════════════════════════════════════════════════════════
 
-def plot_zonal_annual_cycle(merged_df: pd.DataFrame,
-                             zone_df:   pd.DataFrame,
-                             products:  list = None,
-                             save:      bool = True):
-    """
-    Annual cycle per ecological zone.
-    One subplot per zone — all products + obs on each panel.
-    Requires zone assignments in zone_df (zone_name × station mapping).
-    """
+STATION_ZONE = {
+    "WA001": "Sahelian",         # Dakar
+    "WA002": "Sahelian",         # Bamako
+    "WA003": "Sahelian",         # Ouagadougou
+    "WA004": "Sahelian",         # Niamey
+    "WA005": "Soudanian",        # Abuja
+    "WA006": "Guineo-Congolean", # Accra
+    "WA007": "Guineo-Congolean", # Abidjan
+    "WA008": "Soudanian",        # Conakry
+    "WA009": "Guinean",          # Freetown
+    "WA010": "Guinean",          # Monrovia
+    "WA011": "Guineo-Congolean", # Lomé
+    "WA012": "Guineo-Congolean", # Cotonou
+    "WA013": "Soudanian",        # Kano
+    "WA014": "Guinean",          # Kumasi
+    "WA015": "Sahelian",         # Banjul
+    "WA016": "Saharian",         # Nouakchott
+}
+
+ZONE_ORDER = [
+    "Saharian", "Sahelian", "Soudanian",
+    "Guinean", "Guineo-Congolean"
+]
+
+def plot_zonal_annual_cycle(merged_df, zone_df=None,
+                             products=None, save=True):
     products = _get_products(merged_df, products)
 
-    # Get station→zone mapping from zone_df
-    station_zone = (zone_df[["zone_name"]]
-                    .drop_duplicates()
-                    if "station_id" not in zone_df.columns
-                    else zone_df[["station_id","zone_name"]]
-                         .drop_duplicates()
-                         .set_index("station_id")["zone_name"]
-                         .to_dict())
+    df = merged_df.copy()
+    df["zone_name"] = df["station_id"].map(STATION_ZONE)
 
-    if isinstance(station_zone, dict):
-        df = merged_df.copy()
-        df["zone_name"] = df["station_id"].map(station_zone)
-    else:
-        # Fallback: assign by latitude using hardcoded coords
-        STATION_LAT = {
-            "WA001":14.73,"WA002":12.65,"WA003":12.36,"WA004":13.51,
-            "WA005": 9.07,"WA006": 5.56,"WA007": 5.35,"WA008": 9.53,
-            "WA009": 8.49,"WA010": 6.30,"WA011": 6.13,"WA012": 6.37,
-            "WA013":12.05,"WA014": 6.69,"WA015":13.45,
-        }
-        def lat_to_zone(sid):
-            lat = STATION_LAT.get(sid, 10)
-            if lat > 18: return "Saharian"
-            if lat > 14: return "Sahelian"
-            if lat > 10: return "Soudanian"
-            if lat > 7:  return "Guinean"
-            return "Guineo-Congolean"
-        df = merged_df.copy()
-        df["zone_name"] = df["station_id"].map(lat_to_zone)
+    unmapped = df[df["zone_name"].isna()]["station_id"].unique()
+    if len(unmapped) > 0:
+        print(f"  ⚠  Unmapped stations: {unmapped}")
 
-    zones = ["Saharian","Sahelian","Soudanian","Guinean","Guineo-Congolean"]
-    zones = [z for z in zones if z in df["zone_name"].unique()]
+    zones_with_data = [z for z in ZONE_ORDER
+                       if z in df["zone_name"].unique()
+                       and not df[df["zone_name"]==z].empty]
+    print(f"  Zones with data: {zones_with_data}")
 
-    fig, axes = plt.subplots(1, len(zones),
-                              figsize=(4 * len(zones), 5),
+    fig, axes = plt.subplots(1, len(zones_with_data),
+                              figsize=(4*len(zones_with_data), 5),
                               sharey=False)
-    if len(zones) == 1:
+    if len(zones_with_data) == 1:
         axes = [axes]
 
-    for ax, zone in zip(axes, zones):
+    for ax, zone in zip(axes, zones_with_data):
         sub = df[df["zone_name"] == zone]
-        if sub.empty:
-            ax.set_visible(False)
-            continue
+        n_stns = sub["station_id"].nunique()
 
         obs_cycle = sub.groupby("month")[OBS_COL].mean()
         ax.plot(obs_cycle.index, obs_cycle.values, "ko-",
@@ -523,25 +517,23 @@ def plot_zonal_annual_cycle(merged_df: pd.DataFrame,
                     color=PRODUCT_COLORS.get(pname, "grey"),
                     lw=1.5, label=pname, alpha=0.9)
 
-        ax.set_title(zone, fontsize=10, fontweight="bold")
+        ax.set_title(f"{zone}\n({n_stns} stn{'s' if n_stns>1 else ''})",
+                     fontsize=10, fontweight="bold")
         ax.set_xticks(range(1, 13))
         ax.set_xticklabels(["J","F","M","A","M","J",
-                             "J","A","S","O","N","D"],
-                            fontsize=7)
+                             "J","A","S","O","N","D"], fontsize=7)
         ax.set_xlabel("Month", fontsize=9)
         ax.set_ylabel("mm/day", fontsize=9)
         ax.grid(True, alpha=0.2)
 
-    # Shared legend below figure
     handles = [mpatches.Patch(color="black", label="OBS")] + [
         mpatches.Patch(color=PRODUCT_COLORS.get(p, "grey"), label=p)
         for p in products
     ]
     fig.legend(handles=handles, loc="lower center",
-               ncol=len(products) + 1, fontsize=9,
+               ncol=len(products)+1, fontsize=9,
                bbox_to_anchor=(0.5, -0.08), framealpha=0.9)
-    fig.suptitle("Annual Cycle by Ecological Zone — All Products",
-                 fontsize=13, y=1.02)
+    fig.suptitle("Ecological Zone — All Products", fontsize=13, y=1.02)
     fig.tight_layout()
 
     if save:
