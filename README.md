@@ -5,7 +5,7 @@
 
 ## Why this work matters
 
-Accurate precipitation data is a foundation of almost every environmental decision in West Africa — from drought early warning and crop yield forecasting to flood risk mapping, water resource management, and biodiversity conservation planning. Yet the region remains one of the most data-sparse on Earth. Rain gauge networks are thin and unevenly distributed, and the gridded satellite and reanalysis products that fill the gap vary substantially in accuracy depending on location, season, and ecological context.
+Accurate precipitation data is a foundation of almost every environmental decision — from drought early warning and crop yield forecasting to flood risk mapping, water resource management, and biodiversity conservation planning. Yet the region remains one of the most data-sparse on Earth. Rain gauge networks are thin and unevenly distributed, and the gridded satellite and reanalysis products that fill the gap vary substantially in accuracy depending on location, season, and ecological context.
 
 This framework systematically evaluates six widely used global precipitation products against real gauge-based observations across five ecological zones — from the hyperarid Saharian north to the equatorial Guineo-Congolean south. The goal is not simply to rank products but to characterise *where*, *when*, and *why* they succeed or fail, providing actionable guidance for researchers, hydrologists, and conservation practitioners choosing datasets for applications in the region.
 
