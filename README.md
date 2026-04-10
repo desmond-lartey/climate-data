@@ -24,7 +24,7 @@ For conservation management specifically, the findings help answer questions suc
 | Rain/dry threshold | 1.0 mm/day (WMO convention) |
 | Ecological zones | Saharian · Sahelian · Soudanian · Guinean · Guineo-Congolean |
 
-### Gauge stations
+### Gauge stations 
 
 | ID | City | Country | Zone |
 |---|---|---|---|
