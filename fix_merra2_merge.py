@@ -3,7 +3,7 @@ Fix MERRA2 merge — run this ONCE to rebuild precip_extraction_MERRA2.csv
 then re-run merge_extractions.py to rebuild merged_obs_grid.csv
 """
 import pandas as pd
-from pathlib import Path
+from pathlib import Path 
 
 DATA_DIR = Path(r"C:\Users\Gebruiker\OneDrive\Spain\Paper 1\precipitation_assessment\DATA_DIR")
 
