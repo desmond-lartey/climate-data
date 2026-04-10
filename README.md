@@ -290,7 +290,7 @@ pip install requests xarray netCDF4 geopandas shapely \
 Python 3.9+ recommended. GEE authentication required for Steps 1–3:
 
 ```bash
-earthengine authenticate --project ee-desmond
+earthengine authenticate --project xxxxxxx
 ```
 
 ---
