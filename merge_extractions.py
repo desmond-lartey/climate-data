@@ -1,7 +1,7 @@
 """
 ============================================================
 GLOBAL PRECIPITATION PRODUCTS — COMPARATIVE ASSESSMENT
-West Africa  |  2001–2020
+West Africa  |  2001–2020 
 ============================================================
 Step 2: Local Merge — CSV Extractions + Observations
 ============================================================
