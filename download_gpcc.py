@@ -69,7 +69,8 @@ STATIONS = {
     "WA013": (  8.52,  12.05),  # Kano
     "WA014": ( -1.62,   6.69),  # Kumasi
     "WA015": (-16.68,  13.45),  # Banjul
-    "WA016": (-15.97, 18.07),   # Tamanrasset, Algeria
+    "WA016": (-15.97,  18.07),  # Nouakchott
+    
 }
 
 
