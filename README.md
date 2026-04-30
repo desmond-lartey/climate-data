@@ -9,7 +9,7 @@ Accurate precipitation data is a foundation of almost every environmental decisi
 
 This framework systematically evaluates six widely used global precipitation products against real gauge-based observations across five ecological zones — from the hyperarid Saharian north to the equatorial Guineo-Congolean south. The goal is not simply to rank products but to characterise *where*, *when*, and *why* they succeed or fail, providing actionable guidance for researchers, hydrologists, and conservation practitioners choosing datasets for applications in the region.
 
-For conservation management specifically, the findings help answer questions such as: Which product should underpin a drought monitoring system for the Sahelian zone? Which best captures the bimodal rainfall signal critical for agricultural calendars in the Guinean zone? Where is product uncertainty high enough to warrant caution in habitat suitability modelling?
+For conservation management specifically, the findings help answer questions such as: Which product should underpin a drought monitoring system for the Sahelian zone? Which best captures the bimodal rainfall signal critical for agricultural calendars in the Guinean zone? Where is product uncertainty high enough to warrant caution in habitat suitability modelling? 
 
 ---
 
