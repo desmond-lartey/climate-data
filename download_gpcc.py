@@ -4,7 +4,7 @@ GPCC Full Data Daily v2022 — Download & Extract
 ============================================================
 Downloads GPCC daily precipitation NetCDF files (1.0° res)
 for 2001-2020, extracts monthly mean mm/day at the 15 WA
-gauge station locations, and saves:
+gauge station locations, and saves: 
 
   DATA_DIR/gpcc_obs_2001_2020.csv
     columns: station_id, year, month, obs_mm_day
