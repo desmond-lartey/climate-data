@@ -89,7 +89,7 @@ for yr in range(START_YEAR, END_YEAR + 1):
     print(f"  ↗  Submitted: wa016_MERRA2_{yr}.csv")
 
 print(f"""
-   {len(tasks)} tasks submitted.
+   {len(tasks)} tasks submitted. 
   Monitor: https://code.earthengine.google.com/tasks
 
   Each task reads from pre-built asset — no hourly reprocessing.
