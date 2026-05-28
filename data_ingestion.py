@@ -347,6 +347,7 @@ STATIONS_META = [
     ("WA013", "Kano",           8.52,  12.05,  481,   "demo"),
     ("WA014", "Kumasi",        -1.62,   6.69,  287,   "demo"),
     ("WA015", "Banjul",       -16.68,  13.45,   28,   "demo"),
+    ("WA016", "Nouakchott",   -15.97,  18.07,    9,   "demo"),
 ]
 
 STATIONS_DF = pd.DataFrame(
