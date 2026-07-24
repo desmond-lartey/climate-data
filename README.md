@@ -3,8 +3,8 @@
 **Comparative evaluation and optimal selection of rainfall datasets for natural resource management applications.**
 
 <p align="center">
-  <a href="https://github.com/desmond-lartey/precipitation_assessment" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/status-research-blue" alt="Status"></a>
-  <a href="https://github.com/desmond-lartey/precipitation_assessment/blob/main/LICENSE" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  <a href="https://github.com/desmond-lartey/climate-data" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/status-research-blue" alt="Status"></a>
+  <a href="https://github.com/desmond-lartey/climate-data/blob/main/LICENSE" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <img src="https://img.shields.io/badge/period-2001–2020-lightgrey" alt="Period">
   <img src="https://img.shields.io/badge/products-6-orange" alt="Products">
   <img src="https://img.shields.io/badge/zones-5%20ecological-brightgreen" alt="Zones">
@@ -68,7 +68,7 @@ the manuscript and the reproducible outputs in this repository.
 ## Repository layout
 
 ```
-precipitation_assessment/
+climate-data/            (repo root; local folder may be named precipitation_assessment)
 ├── pipeline/            the clean, ordered analysis pipeline (run these)
 ├── gee-full-script/     the companion Google Earth Engine dashboard (JavaScript)
 ├── ecological_zones_5class/   ecological zone boundaries (SHP + GeoJSON)
@@ -83,7 +83,7 @@ precipitation_assessment/
 > written (per-station back-fills, MERRA-2 re-submissions, figure
 > iterations). These are retained under `archive/` for provenance, but
 > the **clean, ordered pipeline** is the entry point — see the
-> [documentation](https://desmond-lartey.github.io/precipitation_assessment/)
+> [documentation](https://desmond-lartey.github.io/climate-data/)
 > for the correct run order.
 
 ## Documentation
@@ -92,11 +92,11 @@ Full documentation — study design, pipeline run order, validation
 metrics, the Earth Engine dashboard, and how this feeds the `savana`
 package — is published at:
 
-**https://desmond-lartey.github.io/precipitation_assessment/**
+**https://desmond-lartey.github.io/climate-data/**
 
 ## Reproducing the study
 
-See the [Pipeline](https://desmond-lartey.github.io/precipitation_assessment/pipeline/)
+See the [Pipeline](https://desmond-lartey.github.io/climate-data/pipeline/)
 page for the exact run order. In brief: three Earth-Engine steps submit
 extraction tasks and download results, then the remaining steps run
 locally to download GPCC observations, merge everything into a master
