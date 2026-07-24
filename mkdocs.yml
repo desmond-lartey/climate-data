@@ -1,0 +1,53 @@
+site_name: WA Precipitation Product Assessment
+site_description: Comparative evaluation and optimal selection of rainfall datasets for natural resource management applications in West Africa
+site_author: Desmond Lartey
+repo_url: https://github.com/desmond-lartey/precipitation_assessment
+
+copyright: "Copyright &copy; 2026 Desmond Lartey"
+
+theme:
+    name: material
+    palette:
+        - scheme: slate
+          primary: blue
+          accent: light blue
+          toggle:
+              icon: material/toggle-switch
+              name: Switch to light mode
+        - scheme: default
+          primary: blue
+          accent: light blue
+          toggle:
+              icon: material/toggle-switch-off-outline
+              name: Switch to dark mode
+    icon:
+        repo: fontawesome/brands/github
+    features:
+        - navigation.instant
+        - navigation.tracking
+        - navigation.top
+        - search.highlight
+        - search.share
+        - content.code.copy
+
+plugins:
+    - search
+    - include-markdown
+
+nav:
+    - Home: index.md
+    - Study Design: study-design.md
+    - Pipeline: pipeline.md
+    - Validation Metrics: metrics.md
+    - Findings: findings.md
+    - Earth Engine Dashboard: gee-dashboard.md
+    - From Study to Package: package.md
+
+markdown_extensions:
+    - admonition
+    - pymdownx.details
+    - pymdownx.superfences
+    - pymdownx.highlight
+    - tables
+    - toc:
+          permalink: true
