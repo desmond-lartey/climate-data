@@ -41,6 +41,8 @@ nav:
     - Validation Metrics: metrics.md
     - Findings: findings.md
     - Earth Engine Dashboard: gee-dashboard.md
+    - Script Reference: script-reference.md
+    - Package API: package-api.md
     - From Study to Package: package.md
 
 markdown_extensions:
