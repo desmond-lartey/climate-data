@@ -50,10 +50,7 @@ specific unit conversion.
     `data_ingestion.py` and `merge_extractions.py` still contain
     `_generate_demo_obs` / `_make_demo_obs` from early development, before
     real GPCC data was available. **Do not use these** — the study uses
-    real GPCC observations via `download_gpcc.py`. The synthetic path was
-    removed entirely from the `savana.rainfall` package for the same
-    reason: fabricated ground truth makes every validation metric
-    meaningless.
+    real GPCC observations via `download_gpcc.py`.
 
 ## gauge_extraction.py
 
