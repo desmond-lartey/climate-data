@@ -13,8 +13,10 @@
       
       
       
-        <link rel="prev" href="../package-api/">
+        <link rel="prev" href="../script-reference/">
       
+      
+        <link rel="next" href="../package/">
       
       
         
@@ -25,7 +27,7 @@
     
     
       
-        <title>From Study to Package - WA Precipitation Product Assessment</title>
+        <title>Package API - WA Precipitation Product Assessment</title>
       
     
     
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#from-study-to-package" class="md-skip">
+        <a href="#package-api" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              From Study to Package
+              Package API
             
           </span>
         </div>
@@ -449,33 +451,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../package-api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Package API
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -495,7 +470,7 @@
   <span class="md-ellipsis">
     
   
-    From Study to Package
+    Package API
   
 
     
@@ -513,7 +488,7 @@
   <span class="md-ellipsis">
     
   
-    From Study to Package
+    Package API
   
 
     
@@ -539,10 +514,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-changed-in-the-move-to-a-package" class="md-nav__link">
+  <a href="#one-call-entry-point" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What changed in the move to a package
+        One-call entry point
       
     </span>
   </a>
@@ -550,10 +525,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-same-result-one-call" class="md-nav__link">
+  <a href="#the-assessment-object" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The same result, one call
+        The assessment object
       
     </span>
   </a>
@@ -561,21 +536,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-keep-both" class="md-nav__link">
+  <a href="#full-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why keep both
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Links
+        Full reference
       
     </span>
   </a>
@@ -586,6 +550,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From Study to Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -617,10 +608,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-changed-in-the-move-to-a-package" class="md-nav__link">
+  <a href="#one-call-entry-point" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What changed in the move to a package
+        One-call entry point
       
     </span>
   </a>
@@ -628,10 +619,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-same-result-one-call" class="md-nav__link">
+  <a href="#the-assessment-object" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The same result, one call
+        The assessment object
       
     </span>
   </a>
@@ -639,21 +630,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-keep-both" class="md-nav__link">
+  <a href="#full-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why keep both
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Links
+        Full reference
       
     </span>
   </a>
@@ -680,85 +660,113 @@
   
 
 
-<h1 id="from-study-to-package">From Study to Package<a class="headerlink" href="#from-study-to-package" title="Permanent link">&para;</a></h1>
-<p>This repository is the empirical study. The <strong>method</strong> it developed has
-been generalised into the <code>savana.rainfall</code> module of the
-<a href="https://github.com/desmond-lartey/savana">savana package</a>, so the same
-workflow can be applied to any region, gauge network, product set, zone
-scheme, and application weighting — not just West Africa and these 16
-stations.</p>
-<h2 id="what-changed-in-the-move-to-a-package">What changed in the move to a package<a class="headerlink" href="#what-changed-in-the-move-to-a-package" title="Permanent link">&para;</a></h2>
-<p>The study's scripts are tailored to this specific dataset. The package
-keeps the exact same methodology but makes every fixed choice an
-overridable default:</p>
+<h1 id="package-api">Package API<a class="headerlink" href="#package-api" title="Permanent link">&para;</a></h1>
+<p>The study's method is available as a proper importable API in the
+<strong><code>savana.rainfall</code></strong> module of the
+<a href="https://github.com/desmond-lartey/savana">savana package</a>. Unlike the
+<a href="../script-reference/">pipeline scripts</a> in this repository — which run in
+a fixed order for this specific dataset — the package is a maintained,
+versioned library you can call on any region.</p>
+<p>Install:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;savana[rainfall]&quot;</span>
+</code></pre></div>
+<h2 id="one-call-entry-point">One-call entry point<a class="headerlink" href="#one-call-entry-point" title="Permanent link">&para;</a></h2>
+<p><strong><code>validate_against_gpcc(...)</code></strong> runs the entire assessment and returns a
+<code>RainfallAssessment</code> with all results attached.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">savana.rainfall</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_against_gpcc</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">validate_against_gpcc</span><span class="p">(</span>
+    <span class="n">stations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>              <span class="c1"># None = the 16 WA stations; or coords / file / DataFrame</span>
+    <span class="n">products</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>              <span class="c1"># None = all 6; or a subset</span>
+    <span class="n">start_year</span><span class="o">=</span><span class="mi">2001</span><span class="p">,</span>
+    <span class="n">end_year</span><span class="o">=</span><span class="mi">2020</span><span class="p">,</span>
+    <span class="n">obs_source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>            <span class="c1"># &quot;download&quot; (any coords) or &quot;ee_asset&quot;</span>
+    <span class="n">cache_dir</span><span class="o">=</span><span class="s2">&quot;savana_rainfall_data&quot;</span><span class="p">,</span>
+    <span class="n">zones_gdf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">zones_fc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">rain_threshold</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summarize</span><span class="p">())</span>
+<span class="n">result</span><span class="o">.</span><span class="n">export_workbook</span><span class="p">(</span><span class="s2">&quot;decision_tool.xlsx&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="the-assessment-object">The assessment object<a class="headerlink" href="#the-assessment-object" title="Permanent link">&para;</a></h2>
+<p><strong><code>RainfallAssessment(...)</code></strong> is the step-by-step, chainable form. Its
+stages mirror this repository's pipeline one-to-one:</p>
 <table>
 <thead>
 <tr>
-<th>In the study (fixed)</th>
-<th>In the package (default, overridable)</th>
+<th>Pipeline script</th>
+<th><code>RainfallAssessment</code> method</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>16 West Africa stations</td>
-<td>Any stations — a DataFrame, a file, or coordinates</td>
+<td><code>download_gpcc.py</code> / gauge obs</td>
+<td><code>.get_observations(source=...)</code></td>
 </tr>
 <tr>
-<td>6 named products</td>
-<td>Any subset, or your own product definitions</td>
+<td><code>data_ingestion.py</code></td>
+<td><code>.ingest(start, end)</code></td>
 </tr>
 <tr>
-<td>5 West Africa ecological zones</td>
-<td>Any zones you build, or none (pooled)</td>
+<td><code>gauge_extraction.py</code></td>
+<td><code>.extract(cache_dir=...)</code></td>
 </tr>
 <tr>
-<td>GPCC obs uploaded for these stations</td>
-<td>GPCC downloaded for <em>any</em> coordinates, or your own asset</td>
+<td><code>add_zones_to_merged.py</code></td>
+<td><code>.assign_zones(...)</code></td>
 </tr>
 <tr>
-<td>Seven fixed application weightings</td>
-<td>Your own application-weight profiles</td>
+<td><code>merge_extractions.py</code></td>
+<td><code>.merge()</code></td>
 </tr>
 <tr>
-<td>A run-in-order set of scripts</td>
-<td>One call, or a step-by-step object</td>
+<td><code>validation_metrics.py</code></td>
+<td><code>.validate()</code></td>
+</tr>
+<tr>
+<td><code>threshold_sensitivity.py</code></td>
+<td><code>.analyze_thresholds()</code></td>
+</tr>
+<tr>
+<td>decision scoring</td>
+<td><code>.score()</code></td>
+</tr>
+<tr>
+<td><code>generate_decision_tool.py</code></td>
+<td><code>.export_workbook(path)</code></td>
+</tr>
+<tr>
+<td><code>visualisation.py</code> / <code>spatial_analysis.py</code></td>
+<td><code>.preview_*()</code>, <code>.show(...)</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="the-same-result-one-call">The same result, one call<a class="headerlink" href="#the-same-result-one-call" title="Permanent link">&para;</a></h2>
-<p>What the study runs as a ten-step pipeline, the package runs as:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">savana.rainfall</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_against_gpcc</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">savana.rainfall</span><span class="w"> </span><span class="kn">import</span> <span class="n">RainfallAssessment</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">validate_against_gpcc</span><span class="p">(</span><span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summarize</span><span class="p">())</span>
-<span class="n">result</span><span class="o">.</span><span class="n">export_workbook</span><span class="p">(</span><span class="s2">&quot;decision_tool.xlsx&quot;</span><span class="p">)</span>
+<span class="n">ra</span> <span class="o">=</span> <span class="n">RainfallAssessment</span><span class="p">(</span><span class="n">stations</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">),</span> <span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">)</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">ingest</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s2">&quot;2020-01-01&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31&quot;</span><span class="p">)</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">get_observations</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s2">&quot;download&quot;</span><span class="p">)</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">compare_table</span><span class="p">()</span>          <span class="c1"># obs vs every product, side by side</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span><span class="o">.</span><span class="n">score</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ra</span><span class="o">.</span><span class="n">answer</span><span class="p">(</span><span class="s2">&quot;which product is best for drought early warning?&quot;</span><span class="p">))</span>
 </code></pre></div>
-<p>That reproduces the West Africa study's configuration by default. To run
-the <em>same method</em> somewhere else, pass different parameters:</p>
-<div class="highlight"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">validate_against_gpcc</span><span class="p">(</span>
-    <span class="n">stations</span><span class="o">=</span><span class="p">[(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">),</span> <span class="p">(</span><span class="mf">2.1</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">)],</span>   <span class="c1"># your stations</span>
-    <span class="n">products</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;CHIRPS&quot;</span><span class="p">,</span> <span class="s2">&quot;GPM_IMERG&quot;</span><span class="p">],</span>       <span class="c1"># your product subset</span>
-    <span class="n">start_year</span><span class="o">=</span><span class="mi">2015</span><span class="p">,</span>
-    <span class="n">end_year</span><span class="o">=</span><span class="mi">2023</span><span class="p">,</span>
-    <span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div>
-<h2 id="why-keep-both">Why keep both<a class="headerlink" href="#why-keep-both" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>This repository</strong> is the citable study: the specific data, the
-  figures in the manuscript, and the exact scripts that produced them.
-  It is the record of <em>what was done</em>.</li>
-<li><strong>The package</strong> is the reusable method: how to do the <em>same thing</em>
-  anywhere. It is maintained, documented, and versioned independently.</li>
-</ul>
-<p>If you want to reproduce or cite the West Africa results, use this
-repository. If you want to run the analysis on your own region, use the
-package.</p>
-<h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
+<h2 id="full-reference">Full reference<a class="headerlink" href="#full-reference" title="Permanent link">&para;</a></h2>
+<p>The complete, auto-generated API reference (every function, class, and
+parameter) lives in the savana package documentation:</p>
 <ul>
 <li>Package repository: <a href="https://github.com/desmond-lartey/savana">https://github.com/desmond-lartey/savana</a></li>
-<li>Package module: <code>savana.rainfall</code></li>
+<li>The <code>savana.rainfall</code> module documentation on the savana docs site.</li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Why the split</p>
+<p>This repository is the citable study — the exact scripts that
+produced the manuscript's figures. The package is the reusable
+method. Reproduce or cite the West Africa results from here; run the
+same analysis elsewhere with the package.</p>
+</div>
 
 
 

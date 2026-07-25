@@ -13,8 +13,10 @@
       
       
       
-        <link rel="prev" href="../package-api/">
+        <link rel="prev" href="../gee-dashboard/">
       
+      
+        <link rel="next" href="../package-api/">
       
       
         
@@ -25,7 +27,7 @@
     
     
       
-        <title>From Study to Package - WA Precipitation Product Assessment</title>
+        <title>Script Reference - WA Precipitation Product Assessment</title>
       
     
     
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#from-study-to-package" class="md-skip">
+        <a href="#script-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              From Study to Package
+              Script Reference
             
           </span>
         </div>
@@ -422,10 +424,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../script-reference/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -441,6 +470,158 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#setup_configpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        setup_config.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data_ingestionpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        data_ingestion.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gauge_extractionpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gauge_extraction.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download_gpccpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        download_gpcc.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merge_extractionspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_extractions.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#add_zones_to_mergedpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_zones_to_merged.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation_metricspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validation_metrics.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threshold_sensitivitypy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        threshold_sensitivity.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualisationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        visualisation.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spatial_analysispy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spatial_analysis.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generate_decision_toolpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_decision_tool.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#06_run_pipelinepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        06_run_pipeline.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -476,37 +657,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    From Study to Package
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../package/" class="md-nav__link">
         
   
   
@@ -522,70 +676,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-changed-in-the-move-to-a-package" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What changed in the move to a package
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-same-result-one-call" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The same result, one call
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-keep-both" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why keep both
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#links" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Links
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -617,10 +707,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-changed-in-the-move-to-a-package" class="md-nav__link">
+  <a href="#setup_configpy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What changed in the move to a package
+        setup_config.py
       
     </span>
   </a>
@@ -628,10 +718,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-same-result-one-call" class="md-nav__link">
+  <a href="#data_ingestionpy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The same result, one call
+        data_ingestion.py
       
     </span>
   </a>
@@ -639,10 +729,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-keep-both" class="md-nav__link">
+  <a href="#gauge_extractionpy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why keep both
+        gauge_extraction.py
       
     </span>
   </a>
@@ -650,10 +740,98 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#links" class="md-nav__link">
+  <a href="#download_gpccpy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Links
+        download_gpcc.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merge_extractionspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_extractions.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#add_zones_to_mergedpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_zones_to_merged.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation_metricspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validation_metrics.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threshold_sensitivitypy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        threshold_sensitivity.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualisationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        visualisation.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spatial_analysispy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spatial_analysis.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generate_decision_toolpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_decision_tool.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#06_run_pipelinepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        06_run_pipeline.py
       
     </span>
   </a>
@@ -680,84 +858,165 @@
   
 
 
-<h1 id="from-study-to-package">From Study to Package<a class="headerlink" href="#from-study-to-package" title="Permanent link">&para;</a></h1>
-<p>This repository is the empirical study. The <strong>method</strong> it developed has
-been generalised into the <code>savana.rainfall</code> module of the
-<a href="https://github.com/desmond-lartey/savana">savana package</a>, so the same
-workflow can be applied to any region, gauge network, product set, zone
-scheme, and application weighting — not just West Africa and these 16
-stations.</p>
-<h2 id="what-changed-in-the-move-to-a-package">What changed in the move to a package<a class="headerlink" href="#what-changed-in-the-move-to-a-package" title="Permanent link">&para;</a></h2>
-<p>The study's scripts are tailored to this specific dataset. The package
-keeps the exact same methodology but makes every fixed choice an
-overridable default:</p>
-<table>
-<thead>
-<tr>
-<th>In the study (fixed)</th>
-<th>In the package (default, overridable)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>16 West Africa stations</td>
-<td>Any stations — a DataFrame, a file, or coordinates</td>
-</tr>
-<tr>
-<td>6 named products</td>
-<td>Any subset, or your own product definitions</td>
-</tr>
-<tr>
-<td>5 West Africa ecological zones</td>
-<td>Any zones you build, or none (pooled)</td>
-</tr>
-<tr>
-<td>GPCC obs uploaded for these stations</td>
-<td>GPCC downloaded for <em>any</em> coordinates, or your own asset</td>
-</tr>
-<tr>
-<td>Seven fixed application weightings</td>
-<td>Your own application-weight profiles</td>
-</tr>
-<tr>
-<td>A run-in-order set of scripts</td>
-<td>One call, or a step-by-step object</td>
-</tr>
-</tbody>
-</table>
-<h2 id="the-same-result-one-call">The same result, one call<a class="headerlink" href="#the-same-result-one-call" title="Permanent link">&para;</a></h2>
-<p>What the study runs as a ten-step pipeline, the package runs as:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">savana.rainfall</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_against_gpcc</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">validate_against_gpcc</span><span class="p">(</span><span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summarize</span><span class="p">())</span>
-<span class="n">result</span><span class="o">.</span><span class="n">export_workbook</span><span class="p">(</span><span class="s2">&quot;decision_tool.xlsx&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p>That reproduces the West Africa study's configuration by default. To run
-the <em>same method</em> somewhere else, pass different parameters:</p>
-<div class="highlight"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">validate_against_gpcc</span><span class="p">(</span>
-    <span class="n">stations</span><span class="o">=</span><span class="p">[(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">),</span> <span class="p">(</span><span class="mf">2.1</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">)],</span>   <span class="c1"># your stations</span>
-    <span class="n">products</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;CHIRPS&quot;</span><span class="p">,</span> <span class="s2">&quot;GPM_IMERG&quot;</span><span class="p">],</span>       <span class="c1"># your product subset</span>
-    <span class="n">start_year</span><span class="o">=</span><span class="mi">2015</span><span class="p">,</span>
-    <span class="n">end_year</span><span class="o">=</span><span class="mi">2023</span><span class="p">,</span>
-    <span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div>
-<h2 id="why-keep-both">Why keep both<a class="headerlink" href="#why-keep-both" title="Permanent link">&para;</a></h2>
+<h1 id="script-reference">Script Reference<a class="headerlink" href="#script-reference" title="Permanent link">&para;</a></h1>
+<p>This page documents the functions in each pipeline script. These scripts
+are a <strong>run-in-order study pipeline</strong>, not an installable package — so
+this is a reference for reading and adapting the study's code, not an
+importable library API. For the reusable, installable version of this
+method, see <a href="../package-api/">Package API</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Run order</p>
+<p>See the <a href="../pipeline/">Pipeline</a> page for the order these run in. This
+page is organised the same way.</p>
+</div>
+<h2 id="setup_configpy">setup_config.py<a class="headerlink" href="#setup_configpy" title="Permanent link">&para;</a></h2>
+<p>Shared configuration: products, stations, zones, paths, and per-product
+availability windows.</p>
 <ul>
-<li><strong>This repository</strong> is the citable study: the specific data, the
-  figures in the manuscript, and the exact scripts that produced them.
-  It is the record of <em>what was done</em>.</li>
-<li><strong>The package</strong> is the reusable method: how to do the <em>same thing</em>
-  anywhere. It is maintained, documented, and versioned independently.</li>
+<li><strong><code>get_product_window(key)</code></strong> — return <code>(start, end)</code> date strings
+  clipped to a product's availability period.</li>
 </ul>
-<p>If you want to reproduce or cite the West Africa results, use this
-repository. If you want to run the analysis on your own region, use the
-package.</p>
-<h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
+<h2 id="data_ingestionpy">data_ingestion.py<a class="headerlink" href="#data_ingestionpy" title="Permanent link">&para;</a></h2>
+<p>Earth Engine ingestion and harmonisation of all six products to monthly
+mean mm/day, plus the climatology-asset export utilities.</p>
 <ul>
-<li>Package repository: <a href="https://github.com/desmond-lartey/savana">https://github.com/desmond-lartey/savana</a></li>
-<li>Package module: <code>savana.rainfall</code></li>
+<li><strong><code>build_roi()</code></strong> — load the study ROI from a GEE asset and dissolve to
+  a single geometry.</li>
+<li><strong><code>load_product(name, roi, start, end)</code></strong> — load a product's raw
+  collection, clip to ROI, convert to mm/day.</li>
+<li><strong><code>aggregate_to_monthly(ic, product_name)</code></strong> — aggregate to monthly
+  mean mm/day, tagging year/month.</li>
+<li><strong><code>resample_to_common(ic)</code></strong> — bilinear-resample every image to the
+  common analysis grid.</li>
+<li><strong><code>stations_to_ee_fc(stations_df)</code></strong> — convert the stations DataFrame
+  to a GEE <code>FeatureCollection</code>.</li>
+<li><strong><code>export_climatology_to_drive(product_name, drive_folder)</code></strong> /
+  <strong><code>export_climatology_to_asset(product_name)</code></strong> — export a 12-band
+  monthly climatology image.</li>
+<li><strong><code>export_climatology_merra2_yearly(years, completed_years)</code></strong> — export
+  MERRA-2 climatology one year at a time (avoids the 12-hour task
+  timeout).</li>
+<li><strong><code>merge_merra2_yearly_assets(...)</code></strong> — combine the yearly MERRA-2
+  assets into one image.</li>
+</ul>
+<p>Internal harmonisers (<code>_harmonise_scale</code>, <code>_harmonise_era5_monthly</code>,
+<code>_harmonise_terra_monthly</code>, <code>_load_merra2_daily</code>, …) apply each product's
+specific unit conversion.</p>
+<div class="admonition warning">
+<p class="admonition-title">Synthetic-observation helpers are deprecated</p>
+<p><code>data_ingestion.py</code> and <code>merge_extractions.py</code> still contain
+<code>_generate_demo_obs</code> / <code>_make_demo_obs</code> from early development, before
+real GPCC data was available. <strong>Do not use these</strong> — the study uses
+real GPCC observations via <code>download_gpcc.py</code>. The synthetic path was
+removed entirely from the <code>savana.rainfall</code> package for the same
+reason: fabricated ground truth makes every validation metric
+meaningless.</p>
+</div>
+<h2 id="gauge_extractionpy">gauge_extraction.py<a class="headerlink" href="#gauge_extractionpy" title="Permanent link">&para;</a></h2>
+<p>Point-extraction of each product at the gauge stations, and the
+observation/grid merge.</p>
+<ul>
+<li><strong><code>get_stations_and_obs(stations_csv, obs_csv)</code></strong> — return
+  <code>(stations_df, obs_df, station_fc)</code>.</li>
+<li><strong><code>load_gpcc_from_nc(nc_path, stations_df)</code></strong> — extract GPCC monthly
+  values at station locations from a NetCDF file.</li>
+<li><strong><code>extract_product(station_fc, product_name, drive_folder)</code></strong> — sample
+  one product's monthly collection at every station.</li>
+<li><strong><code>extract_all_products(station_fc, products, drive_folder, completed)</code></strong>
+  — submit one extraction task per product (runs in parallel on GEE).</li>
+<li><strong><code>extract_merra2_from_assets(...)</code></strong> — extract MERRA-2 from the
+  pre-exported yearly climatology assets.</li>
+<li><strong><code>merge_obs_and_grid(obs_df, extraction_csvs)</code></strong> — join observed gauge
+  precipitation with the extracted product values.</li>
+</ul>
+<h2 id="download_gpccpy">download_gpcc.py<a class="headerlink" href="#download_gpccpy" title="Permanent link">&para;</a></h2>
+<p>Local download and extraction of the GPCC validation reference.</p>
+<ul>
+<li><strong><code>download_year(yr, raw_dir)</code></strong> — download and decompress one yearly
+  GPCC NetCDF file.</li>
+<li><strong><code>extract_monthly_means(nc_path)</code></strong> — open a GPCC daily NetCDF,
+  resample to monthly mean mm/day at the stations.</li>
+</ul>
+<h2 id="merge_extractionspy">merge_extractions.py<a class="headerlink" href="#merge_extractionspy" title="Permanent link">&para;</a></h2>
+<p>Assemble the master obs-vs-products grid.</p>
+<ul>
+<li><strong><code>load_extraction_csvs(data_dir)</code></strong> — load every product's extraction
+  CSV.</li>
+<li><strong><code>rebuild_merra2(data_dir, start, end)</code></strong> — reassemble MERRA-2 from its
+  yearly pieces.</li>
+<li><strong><code>load_observations(use_real, obs_csv)</code></strong> — load the GPCC observations
+  (set <code>use_real=True</code>).</li>
+<li><strong><code>build_merged(grid_df, obs_df, out_path)</code></strong> — write
+  <code>merged_obs_grid.csv</code>.</li>
+</ul>
+<h2 id="add_zones_to_mergedpy">add_zones_to_merged.py<a class="headerlink" href="#add_zones_to_mergedpy" title="Permanent link">&para;</a></h2>
+<p>Add ecological-zone columns (<code>zone_name</code>, <code>zone_id</code>) to the merged grid,
+producing <code>merged_obs_grid_zoned.csv</code>.</p>
+<h2 id="validation_metricspy">validation_metrics.py<a class="headerlink" href="#validation_metricspy" title="Permanent link">&para;</a></h2>
+<p>Continuous and categorical validation at every aggregation level.</p>
+<ul>
+<li><strong><code>compute_continuous(obs, sim)</code></strong> — bias, PBIAS, MAE, RMSE, r, r²,
+  NSE, KGE.</li>
+<li><strong><code>compute_categorical(obs, sim, thresh)</code></strong> — POD, FAR, CSI, ETS,
+  frequency bias.</li>
+<li><strong><code>validate_per_station(df, products)</code></strong> /
+  <strong><code>validate_overall(df, products)</code></strong> /
+  <strong><code>validate_by_season(df, products)</code></strong> /
+  <strong><code>validate_by_zone(df, station_zone, products)</code></strong> — metrics at each
+  level.</li>
+<li><strong><code>build_station_zone_map()</code></strong> — map each station to its ecological
+  zone.</li>
+<li><strong><code>rank_products(overall_df, zone_df)</code></strong> — composite product rankings.</li>
+</ul>
+<h2 id="threshold_sensitivitypy">threshold_sensitivity.py<a class="headerlink" href="#threshold_sensitivitypy" title="Permanent link">&para;</a></h2>
+<p>The wet/dry threshold sweep and its figures.</p>
+<ul>
+<li><strong><code>categorical_metrics(obs, sim, threshold)</code></strong> — categorical metrics at
+  one threshold.</li>
+<li><strong><code>compute_threshold_table(df)</code></strong> — metrics across every
+  product × zone × threshold combination.</li>
+<li><strong><code>plot_metric_heatmaps(results)</code></strong>, <strong><code>plot_zone_lineplots(results)</code></strong>,
+  <strong><code>plot_product_lines(results)</code></strong>, <strong><code>plot_west_africa_summary(results)</code></strong>,
+  <strong><code>plot_zone_radar(results, threshold)</code></strong> — the sensitivity figures.</li>
+</ul>
+<h2 id="visualisationpy">visualisation.py<a class="headerlink" href="#visualisationpy" title="Permanent link">&para;</a></h2>
+<p>Publication figures.</p>
+<ul>
+<li><strong><code>plot_taylor_diagram(...)</code></strong>, <strong><code>plot_metric_heatmap(...)</code></strong>,
+  <strong><code>plot_scatter_grid(...)</code></strong>, <strong><code>plot_seasonal_boxplot(...)</code></strong>,
+  <strong><code>plot_annual_cycle(...)</code></strong>, <strong><code>plot_station_timeseries(...)</code></strong>,
+  <strong><code>plot_zonal_metric_heatmap(...)</code></strong>, <strong><code>plot_zonal_annual_cycle(...)</code></strong>.</li>
+</ul>
+<h2 id="spatial_analysispy">spatial_analysis.py<a class="headerlink" href="#spatial_analysispy" title="Permanent link">&para;</a></h2>
+<p>Earth Engine spatial maps (inter-product comparison — never against GPCC,
+which is point data).</p>
+<ul>
+<li><strong><code>compute_annual_mean(product_name)</code></strong> — long-term mean annual
+  precipitation (mm/year).</li>
+<li><strong><code>compute_bias_map(product_name, reference)</code></strong> — pixel-wise mean bias
+  between two products.</li>
+<li><strong><code>compute_correlation_map(product_name, reference)</code></strong> — pixel-wise
+  monthly correlation.</li>
+<li><strong><code>compute_trend_map(product_name)</code></strong> — pixel-wise linear trend
+  (mm/day/year).</li>
+<li><strong><code>build_comparison_map(...)</code></strong> / <strong><code>build_trend_map(...)</code></strong> —
+  interactive layered maps.</li>
+</ul>
+<h2 id="generate_decision_toolpy">generate_decision_tool.py<a class="headerlink" href="#generate_decision_toolpy" title="Permanent link">&para;</a></h2>
+<p>The application-weighted decision workbook.</p>
+<ul>
+<li><strong><code>load_data()</code></strong> — load the validation CSVs.</li>
+<li><strong><code>weighted_score(row, weights)</code></strong> — composite score from a metrics row.</li>
+<li><strong><code>build_scores_table(vbz_full)</code></strong> — scores for every
+  app × zone × product.</li>
+<li><strong><code>build_workbook(data, scores_df)</code></strong> — write the interactive
+  <code>.xlsx</code> (selector + scorecard + data sheets).</li>
+</ul>
+<h2 id="06_run_pipelinepy">06_run_pipeline.py<a class="headerlink" href="#06_run_pipelinepy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>run_step(script, label)</code></strong> — run one pipeline step and report
+  status. Chains the local steps once the Earth Engine exports are in
+  place.</li>
 </ul>
 
 
