@@ -907,10 +907,7 @@ specific unit conversion.</p>
 <p><code>data_ingestion.py</code> and <code>merge_extractions.py</code> still contain
 <code>_generate_demo_obs</code> / <code>_make_demo_obs</code> from early development, before
 real GPCC data was available. <strong>Do not use these</strong> — the study uses
-real GPCC observations via <code>download_gpcc.py</code>. The synthetic path was
-removed entirely from the <code>savana.rainfall</code> package for the same
-reason: fabricated ground truth makes every validation metric
-meaningless.</p>
+real GPCC observations via <code>download_gpcc.py</code>.</p>
 </div>
 <h2 id="gauge_extractionpy">gauge_extraction.py<a class="headerlink" href="#gauge_extractionpy" title="Permanent link">&para;</a></h2>
 <p>Point-extraction of each product at the gauge stations, and the

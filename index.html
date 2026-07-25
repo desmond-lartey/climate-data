@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#west-africa-precipitation-product-assessment" class="md-skip">
+        <a href="#precipitation-product-assessment" class="md-skip">
           Skip to content
         </a>
       
@@ -400,10 +400,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#citation-acknowledgements" class="md-nav__link">
+  <a href="#citation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Citation &amp; acknowledgements
+        Citation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Data
       
     </span>
   </a>
@@ -415,6 +426,17 @@
     <span class="md-ellipsis">
       
         License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgments
       
     </span>
   </a>
@@ -749,10 +771,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#citation-acknowledgements" class="md-nav__link">
+  <a href="#citation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Citation &amp; acknowledgements
+        Citation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Data
       
     </span>
   </a>
@@ -764,6 +797,17 @@
     <span class="md-ellipsis">
       
         License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgments
       
     </span>
   </a>
@@ -790,7 +834,7 @@
   
 
 
-<h1 id="west-africa-precipitation-product-assessment">West Africa Precipitation Product Assessment<a class="headerlink" href="#west-africa-precipitation-product-assessment" title="Permanent link">&para;</a></h1>
+<h1 id="precipitation-product-assessment">Precipitation Product Assessment<a class="headerlink" href="#precipitation-product-assessment" title="Permanent link">&para;</a></h1>
 <p><strong>Comparative evaluation and optimal selection of rainfall datasets for natural resource management applications.</strong></p>
 <p align="center">
   <a href="https://github.com/desmond-lartey/climate-data" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/status-research-blue" alt="Status"></a>
@@ -801,7 +845,7 @@
 </p>
 
 <p>Reliable precipitation data underpin conservation planning, hydrological
-modelling, and natural resource management — yet validated guidance on
+modelling, and natural resource management, yet validated guidance on
 <em>which</em> global precipitation product best serves a <em>specific</em> application
 in a <em>specific</em> ecological zone has been largely missing for West Africa.
 This project provides that guidance through a zone-stratified comparative
@@ -814,8 +858,8 @@ which generalises this workflow so it can be applied to any region,
 gauge network, or set of products.</p>
 <h2 id="what-this-study-does">What this study does<a class="headerlink" href="#what-this-study-does" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Validates six products</strong> — CHIRPS, ERA5-Land, GPM IMERG, MERRA-2,
-  PERSIANN-CDR, and TerraClimate — against <strong>GPCC Full Data Daily v2022</strong>
+<li><strong>Validates six products</strong>, CHIRPS, ERA5-Land, GPM IMERG, MERRA-2,
+  PERSIANN-CDR, and TerraClimate, against <strong>GPCC Full Data Daily v2022</strong>
   gauge observations at <strong>16 stations</strong> across <strong>five ecological zones</strong>,
   over <strong>2001–2020</strong>.</li>
 <li><strong>Applies a dual-class evaluation framework</strong>: continuous performance
@@ -823,7 +867,7 @@ gauge network, or set of products.</p>
   wet/dry detection statistics (POD, FAR, CSI, ETS, frequency bias).</li>
 <li><strong>Introduces a threshold-sensitivity analysis</strong> showing that
   categorical detection metrics are structurally unstable in near-zero
-  rainfall environments — a caution for validation practice in drylands.</li>
+  rainfall environments, a caution for validation practice in drylands.</li>
 <li><strong>Produces an application-weighted decision matrix</strong> ranking products
   across seven conservation and water-management applications, per zone.</li>
 </ul>
@@ -831,9 +875,9 @@ gauge network, or set of products.</p>
 <ul>
 <li><strong>GPM IMERG and CHIRPS consistently outperform</strong> the other products
   across most zones and metrics.</li>
-<li><strong>Domain-wide statistics hide zone-specific failures</strong> — for example
+<li><strong>Domain-wide statistics hide zone-specific failures</strong>, for example
   ERA5-Land's Sahelian dry bias and TerraClimate's Soudanian
-  overestimation — which is precisely why zone-stratified evaluation
+  overestimation, which is precisely why zone-stratified evaluation
   matters.</li>
 <li><strong>Optimal product choice is both zone- and application-dependent.</strong>
   There is no single best product; the decision matrix makes the
@@ -877,7 +921,7 @@ the manuscript and the reproducible outputs in this repository.</p>
 </tbody>
 </table>
 <h2 id="repository-layout">Repository layout<a class="headerlink" href="#repository-layout" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>climate-data/            (repo root; local folder may be named precipitation_assessment)
+<div class="highlight"><pre><span></span><code>climate-data/
 ├── pipeline/            the clean, ordered analysis pipeline (run these)
 ├── gee-full-script/     the companion Google Earth Engine dashboard (JavaScript)
 ├── ecological_zones_5class/   ecological zone boundaries (SHP + GeoJSON)
@@ -891,14 +935,14 @@ the manuscript and the reproducible outputs in this repository.</p>
 <p><strong>Note on scripts.</strong> During the study a number of one-off scripts were
 written (per-station back-fills, MERRA-2 re-submissions, figure
 iterations). These are retained under <code>archive/</code> for provenance, but
-the <strong>clean, ordered pipeline</strong> is the entry point — see the
+the <strong>clean, ordered pipeline</strong> is the entry point, see the
 <a href="https://desmond-lartey.github.io/climate-data/">documentation</a>
 for the correct run order.</p>
 </blockquote>
 <h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>Full documentation — study design, pipeline run order, validation
+<p>Full documentation, study design, pipeline run order, validation
 metrics, the Earth Engine dashboard, and how this feeds the <code>savana</code>
-package — is published at:</p>
+package, is published at:</p>
 <p><strong>https://desmond-lartey.github.io/climate-data/</strong></p>
 <h2 id="reproducing-the-study">Reproducing the study<a class="headerlink" href="#reproducing-the-study" title="Permanent link">&para;</a></h2>
 <p>See the <a href="https://desmond-lartey.github.io/climate-data/pipeline/">Pipeline</a>
@@ -920,17 +964,23 @@ weighting:</p>
 <li>Package: https://github.com/desmond-lartey/savana</li>
 <li>Package docs: (see the savana documentation site)</li>
 </ul>
-<h2 id="citation-acknowledgements">Citation &amp; acknowledgements<a class="headerlink" href="#citation-acknowledgements" title="Permanent link">&para;</a></h2>
+<h2 id="citation">Citation<a class="headerlink" href="#citation" title="Permanent link">&para;</a></h2>
 <p>If you use this work, please cite the associated manuscript.</p>
-<p>Data and platform:</p>
+<h2 id="source-data">Source Data<a class="headerlink" href="#source-data" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>GPCC Full Data Daily v2022</strong> — Ziese et al. (2022),
+<li><strong>GPCC Full Data Daily v2022</strong>, Ziese et al. (2022),
   DOI: 10.5676/DWD_GPCC/FD_D_V2022_100</li>
-<li><strong>Google Earth Engine</strong> — Gorelick et al. (2017),
+<li><strong>Google Earth Engine</strong>, Gorelick et al. (2017),
   <em>Remote Sensing of Environment</em>, 202, 18–27.</li>
 </ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p>MIT — see <a href="../LICENSE">LICENSE</a>.</p>
+<p>MIT, see <a href="../LICENSE">LICENSE</a>.</p>
+<h2 id="acknowledgments">Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permanent link">&para;</a></h2>
+<p>We gratefully acknowledge the support of the following organizations:</p>
+<ul>
+<li><a href="https://www.aei.gob.es/convocatorias/buscador-convocatorias/proyectos-generacion-conocimiento-2024/convocatoria">Ministerio de Ciencia, Innovación y Universidades (Spain)</a>: This research is supported by the Agencia Estatal de Investigación (AEI) through Agreement No.: PID2024-158042OB-I00, awarded under <a href="https://www.urv.cat/es/investigacion/proyectos-financiados-externamente/2025/00282/001/understanding-climate-dynamics-in-western-africa-using-a-new-observational-data-set">Knowledge Generation Projects and Actions</a>.</li>
+<li><a href="https://uncliafro.eu/">UNderstanding CLImate Dynamics in Western AFRica using a new Observational Data Set</a>: This work is also  Co-funded by the European Union.</li>
+</ul>
 
 
 
