@@ -735,54 +735,61 @@ earthengine<span class="w"> </span>authenticate
 </code></pre></div>
 <p>Python 3.9+ recommended.</p>
 <h2 id="run-order">Run order<a class="headerlink" href="#run-order" title="Permanent link">&para;</a></h2>
+<p>All pipeline scripts live in the <code>pipeline/</code> folder and run from the
+repository root. The first steps require Google Earth Engine (they submit
+extraction tasks and download results); the rest run locally.</p>
+<div class="admonition success">
+<p class="admonition-title">Complete for all 16 stations</p>
+<p>A fresh run reproduces the full 16-station study from the start.
+<code>pipeline/gauge_extraction.py</code> reads the canonical station list
+(all 16 WA stations, including WA016), so no back-fill step is
+needed. The one-time WA016 and MERRA-2 scripts in <code>archive/</code> are
+provenance only — you do not run them.</p>
+</div>
 <h3 id="earth-engine-steps-submit-tasks-download-from-drive">Earth Engine steps (submit tasks, download from Drive)<a class="headerlink" href="#earth-engine-steps-submit-tasks-download-from-drive" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>Step 1   python data_ingestion.py
-         Submit GEE export tasks for all 6 products at all stations,
-         harmonised to monthly mm/day. Download the resulting CSVs.
+<div class="highlight"><pre><span></span><code>Step 1   python pipeline/data_ingestion.py
+         Harmonise all 6 products to monthly mm/day; export the
+         per-product (and MERRA-2 yearly climatology) assets.
 
-Step 2   python gauge_extraction.py
-         Point-extract each product at the 16 station locations
+Step 2   python pipeline/gauge_extraction.py
+         Point-extract every product at all 16 station locations
          (station FeatureCollection + sampleRegions).
-
-Step 3   MERRA-2 climatology extraction
-         Extract MERRA-2 from pre-exported yearly monthly-climatology
-         assets (avoids the hourly-collection timeout).
 </code></pre></div>
 <h3 id="local-steps-no-earth-engine-required">Local steps (no Earth Engine required)<a class="headerlink" href="#local-steps-no-earth-engine-required" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>Step 4   python download_gpcc.py
-         Download GPCC Full Data Daily v2022 NetCDF files and extract
-         monthly obs_mm_day at the 16 stations.
+<div class="highlight"><pre><span></span><code>Step 3   python pipeline/download_gpcc.py
+         Download GPCC Full Data Daily v2022 and extract monthly
+         obs_mm_day at the 16 stations.
          → gpcc_obs_2001_2020.csv
 
-Step 5   python merge_extractions.py
-         Join all six products with the GPCC observations into one
-         master grid.
+Step 4   python pipeline/merge_extractions.py
+         Join all six products with the GPCC observations.
          → merged_obs_grid.csv
 
-Step 6   python add_zones_to_merged.py
-         Add zone_name / zone_id columns via the climatological zone
-         assignment.
+Step 5   python pipeline/add_zones_to_merged.py
+         Add ecological-zone columns.
          → merged_obs_grid_zoned.csv
 
-Step 7   python validation_metrics.py
-         Compute continuous and categorical metrics per station,
-         season, zone, and pooled.
+Step 6   python pipeline/validation_metrics.py
+         Continuous + categorical metrics per station, season, zone,
+         and pooled.
          → validation_*.csv
 
-Step 8   python threshold_sensitivity.py
-         Sweep the wet/dry threshold (0.1–5.0 mm/day) and record how
-         categorical metrics respond.
+Step 7   python pipeline/threshold_sensitivity.py
+         Sweep the wet/dry threshold (0.1–5.0 mm/day).
 
-Step 9   python visualisation.py
+Step 8   python pipeline/visualisation.py
          Generate the publication figures.
          → figures/
 
-Step 10  python generate_decision_tool.py
+Step 9   python pipeline/generate_decision_tool.py
          Build the application-weighted decision workbook.
          → outputs/WA_Precipitation_Decision_Tool.xlsx
+
+Step 10  python pipeline/fig_application_rankings_v4.py
+         Application-ranking figure from the decision-tool output.
 </code></pre></div>
-<p><code>06_run_pipeline.py</code> chains the local steps once the Earth Engine
-exports are in place.</p>
+<p><code>pipeline/06_run_pipeline.py</code> chains the local steps (3–10) once the
+Earth Engine exports from steps 1–2 are in place.</p>
 <h2 id="key-data-products">Key data products<a class="headerlink" href="#key-data-products" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

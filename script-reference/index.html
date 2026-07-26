@@ -860,10 +860,11 @@
 
 <h1 id="script-reference">Script Reference<a class="headerlink" href="#script-reference" title="Permanent link">&para;</a></h1>
 <p>This page documents the functions in each pipeline script. These scripts
-are a <strong>run-in-order study pipeline</strong>, not an installable package — so
-this is a reference for reading and adapting the study's code, not an
-importable library API. For the reusable, installable version of this
-method, see <a href="../package-api/">Package API</a>.</p>
+live in the <strong><code>pipeline/</code></strong> folder and run in order (see
+<a href="../pipeline/">Pipeline</a>). They are a <strong>run-in-order study pipeline</strong>, not
+an installable package — so this is a reference for reading and adapting
+the study's code, not an importable library API. For the reusable,
+installable version of this method, see <a href="../package-api/">Package API</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Run order</p>
 <p>See the <a href="../pipeline/">Pipeline</a> page for the order these run in. This
@@ -907,7 +908,10 @@ specific unit conversion.</p>
 <p><code>data_ingestion.py</code> and <code>merge_extractions.py</code> still contain
 <code>_generate_demo_obs</code> / <code>_make_demo_obs</code> from early development, before
 real GPCC data was available. <strong>Do not use these</strong> — the study uses
-real GPCC observations via <code>download_gpcc.py</code>.</p>
+real GPCC observations via <code>download_gpcc.py</code>. The synthetic path was
+removed entirely from the <code>savana.rainfall</code> package for the same
+reason: fabricated ground truth makes every validation metric
+meaningless.</p>
 </div>
 <h2 id="gauge_extractionpy">gauge_extraction.py<a class="headerlink" href="#gauge_extractionpy" title="Permanent link">&para;</a></h2>
 <p>Point-extraction of each product at the gauge stations, and the
