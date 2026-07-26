@@ -197,11 +197,11 @@ def extract_product(station_fc:   ee.FeatureCollection,
     ────────────────────────
     The previous single-task approach merged all 7 products into
     one FeatureCollection before export:
-      7 products × 240 months × 15 stations = 25,200 features
+      7 products × 240 months × 16 stations = 26,880 features
     This consumed 58,677 EECU-seconds and timed out at 12h.
 
     Splitting by product means each task handles only:
-      1 product × 240 months × 15 stations = 3,600 features
+      1 product × 240 months × 16 stations = 3,840 features
     Expected runtime: 30–90 min per product (7 tasks run in parallel).
 
     Output CSV: precip_extraction_<PRODUCT_NAME>.csv
@@ -589,7 +589,7 @@ if __name__ == "__main__":
   MERRA2 ASSET-BASED EXTRACTION SUBMITTED
   ══════════════════════════════════════════════════════
   Method   : reads climatology_MERRA2_<YEAR> assets directly
-  Each task: 12 months × 15 stations = 180 features, no hourly data
+  Each task: 12 months × 16 stations = 192 features, no hourly data
   Output   : precip_extraction_MERRA2_<YEAR>.csv per year
 
   AFTER ALL DOWNLOADS COMPLETE:

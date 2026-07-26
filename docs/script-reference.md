@@ -1,10 +1,11 @@
 # Script Reference
 
 This page documents the functions in each pipeline script. These scripts
-are a **run-in-order study pipeline**, not an installable package — so
-this is a reference for reading and adapting the study's code, not an
-importable library API. For the reusable, installable version of this
-method, see [Package API](package-api.md).
+live in the **`pipeline/`** folder and run in order (see
+[Pipeline](pipeline.md)). They are a **run-in-order study pipeline**, not
+an installable package — so this is a reference for reading and adapting
+the study's code, not an importable library API. For the reusable,
+installable version of this method, see [Package API](package-api.md).
 
 !!! note "Run order"
     See the [Pipeline](pipeline.md) page for the order these run in. This
@@ -50,7 +51,10 @@ specific unit conversion.
     `data_ingestion.py` and `merge_extractions.py` still contain
     `_generate_demo_obs` / `_make_demo_obs` from early development, before
     real GPCC data was available. **Do not use these** — the study uses
-    real GPCC observations via `download_gpcc.py`.
+    real GPCC observations via `download_gpcc.py`. The synthetic path was
+    removed entirely from the `savana.rainfall` package for the same
+    reason: fabricated ground truth makes every validation metric
+    meaningless.
 
 ## gauge_extraction.py
 

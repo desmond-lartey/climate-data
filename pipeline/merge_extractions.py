@@ -5,15 +5,20 @@ West Africa  |  2001–2020
 ============================================================
 Step 2: Local Merge — CSV Extractions + Observations
 ============================================================
-IMPORTANT — CORRECT RUN ORDER:
-  1. python append_wa016.py        ← add WA016 to all product CSVs
-  2. python merge_extractions.py   ← rebuild merged_obs_grid.csv
-  3. python validation_metrics.py
-  4. python visualisation.py
+RUN ORDER (clean run — all 16 stations from the start):
+  1. python gauge_extraction.py    ← extract all 16 stations, all products
+  2. python download_gpcc.py       ← download GPCC observations
+  3. python merge_extractions.py   ← build merged_obs_grid.csv
+  4. python add_zones_to_merged.py
+  5. python validation_metrics.py
+  6. python visualisation.py
 
-Do NOT run merge_extractions.py before append_wa016.py —
-the rebuild_merra2() step will preserve WA016 rows only if
-they already exist in precip_extraction_MERRA2.csv.
+Note: gauge_extraction.py reads STATIONS_DF (all 16 WA stations,
+including WA016), so a fresh extraction already contains every
+station. The archive/ folder's append_wa016*.py scripts were a
+one-time back-fill used during the original study, when WA016 was
+added after the first 15 had already been extracted — they are NOT
+needed for a clean run and are kept only for provenance.
 ============================================================
 """
 

@@ -1,4 +1,4 @@
-# Precipitation Product Assessment
+# West Africa Precipitation Product Assessment
 
 **Comparative evaluation and optimal selection of rainfall datasets for natural resource management applications.**
 
@@ -11,7 +11,7 @@
 </p>
 
 Reliable precipitation data underpin conservation planning, hydrological
-modelling, and natural resource management, yet validated guidance on
+modelling, and natural resource management — yet validated guidance on
 *which* global precipitation product best serves a *specific* application
 in a *specific* ecological zone has been largely missing for West Africa.
 This project provides that guidance through a zone-stratified comparative
@@ -26,8 +26,8 @@ gauge network, or set of products.
 
 ## What this study does
 
-- **Validates six products**, CHIRPS, ERA5-Land, GPM IMERG, MERRA-2,
-  PERSIANN-CDR, and TerraClimate, against **GPCC Full Data Daily v2022**
+- **Validates six products** — CHIRPS, ERA5-Land, GPM IMERG, MERRA-2,
+  PERSIANN-CDR, and TerraClimate — against **GPCC Full Data Daily v2022**
   gauge observations at **16 stations** across **five ecological zones**,
   over **2001–2020**.
 - **Applies a dual-class evaluation framework**: continuous performance
@@ -35,7 +35,7 @@ gauge network, or set of products.
   wet/dry detection statistics (POD, FAR, CSI, ETS, frequency bias).
 - **Introduces a threshold-sensitivity analysis** showing that
   categorical detection metrics are structurally unstable in near-zero
-  rainfall environments, a caution for validation practice in drylands.
+  rainfall environments — a caution for validation practice in drylands.
 - **Produces an application-weighted decision matrix** ranking products
   across seven conservation and water-management applications, per zone.
 
@@ -43,9 +43,9 @@ gauge network, or set of products.
 
 - **GPM IMERG and CHIRPS consistently outperform** the other products
   across most zones and metrics.
-- **Domain-wide statistics hide zone-specific failures**, for example
+- **Domain-wide statistics hide zone-specific failures** — for example
   ERA5-Land's Sahelian dry bias and TerraClimate's Soudanian
-  overestimation, which is precisely why zone-stratified evaluation
+  overestimation — which is precisely why zone-stratified evaluation
   matters.
 - **Optimal product choice is both zone- and application-dependent.**
   There is no single best product; the decision matrix makes the
@@ -68,29 +68,31 @@ the manuscript and the reproducible outputs in this repository.
 ## Repository layout
 
 ```
-climate-data/
-├── pipeline/            the clean, ordered analysis pipeline (run these)
+climate-data/            (repo root; local folder may be named precipitation_assessment)
+├── pipeline/            the complete, ordered analysis pipeline (run these)
+├── notebooks/           exploratory notebooks used during the study
+├── archive/             one-time build/repair scripts (provenance only — not run)
 ├── gee-full-script/     the companion Google Earth Engine dashboard (JavaScript)
 ├── ecological_zones_5class/   ecological zone boundaries (SHP + GeoJSON)
 ├── figures/             publication figures produced by the pipeline
 ├── outputs/             the decision-tool workbook and derived tables
 ├── DATA_DIR/            input/output data files (GPCC obs, extractions, merged grids)
-├── notebooks/           exploratory notebooks used during the study
-└── archive/             one-off scripts kept for provenance (not the entry point)
+└── docs/                documentation site source
 ```
 
-> **Note on scripts.** During the study a number of one-off scripts were
-> written (per-station back-fills, MERRA-2 re-submissions, figure
-> iterations). These are retained under `archive/` for provenance, but
-> the **clean, ordered pipeline** is the entry point, see the
-> [documentation](https://desmond-lartey.github.io/climate-data/)
-> for the correct run order.
+> **Complete for all 16 stations.** The `pipeline/` scripts reproduce the
+> full 16-station study from a fresh run — the station list already
+> includes every station, so no back-fill step is needed. The
+> `archive/` folder holds one-time scripts from the original incremental
+> build (WA016 back-fill, MERRA-2 assembly, a superseded figure); they
+> are kept for provenance and are **not** part of a reproduction run. See
+> `archive/README.md`.
 
 ## Documentation
 
-Full documentation, study design, pipeline run order, validation
+Full documentation — study design, pipeline run order, validation
 metrics, the Earth Engine dashboard, and how this feeds the `savana`
-package, is published at:
+package — is published at:
 
 **https://desmond-lartey.github.io/climate-data/**
 
@@ -119,24 +121,17 @@ weighting:
 - Package: https://github.com/desmond-lartey/savana
 - Package docs: (see the savana documentation site)
 
-## Citation
+## Citation & acknowledgements
 
 If you use this work, please cite the associated manuscript.
 
-## Source Data
+Data and platform:
 
-- **GPCC Full Data Daily v2022**, Ziese et al. (2022),
+- **GPCC Full Data Daily v2022** — Ziese et al. (2022),
   DOI: 10.5676/DWD_GPCC/FD_D_V2022_100
-- **Google Earth Engine**, Gorelick et al. (2017),
+- **Google Earth Engine** — Gorelick et al. (2017),
   *Remote Sensing of Environment*, 202, 18–27.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
-
-## Acknowledgments
-
-We gratefully acknowledge the support of the following organizations:
-
--   [Ministerio de Ciencia, Innovación y Universidades (Spain)](https://www.aei.gob.es/convocatorias/buscador-convocatorias/proyectos-generacion-conocimiento-2024/convocatoria): This research is supported by the Agencia Estatal de Investigación (AEI) through Agreement No.: PID2024-158042OB-I00, awarded under [Knowledge Generation Projects and Actions](https://www.urv.cat/es/investigacion/proyectos-financiados-externamente/2025/00282/001/understanding-climate-dynamics-in-western-africa-using-a-new-observational-data-set).
--   [UNderstanding CLImate Dynamics in Western AFRica using a new Observational Data Set](https://uncliafro.eu/): This work is also  Co-funded by the European Union.
+MIT — see [LICENSE](LICENSE).
