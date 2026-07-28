@@ -1,4 +1,4 @@
-# From Study to Package
+# Study to Package
 
 This repository is the empirical study. The **method** it developed has
 been generalised into the `savana.rainfall` module of the

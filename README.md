@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/period-2001–2020-lightgrey" alt="Period">
   <img src="https://img.shields.io/badge/products-6-orange" alt="Products">
   <img src="https://img.shields.io/badge/zones-5%20ecological-brightgreen" alt="Zones">
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=desmond-lartey.climate-data" alt="Visitors">
 </p>
 
 Reliable precipitation data underpin conservation planning, hydrological
@@ -121,17 +122,17 @@ weighting:
 - Package: https://github.com/desmond-lartey/savana
 - Package docs: (see the savana documentation site)
 
-## Citation & acknowledgements
+## Citation
 
 If you use this work, please cite the associated manuscript.
-
-Data and platform:
-
-- **GPCC Full Data Daily v2022** — Ziese et al. (2022),
-  DOI: 10.5676/DWD_GPCC/FD_D_V2022_100
-- **Google Earth Engine** — Gorelick et al. (2017),
-  *Remote Sensing of Environment*, 202, 18–27.
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Acknowledgments
+
+We gratefully acknowledge the support of the following organizations:
+
+-   [UNCLIAFRO Project](https://uncliafro.eu/): This research is supported by the project *UNderstanding CLImate Dynamics in Western AFRica using a new Observational Data Set* under Grant No. **PID2024-158042OB-I00**.
+-   [Ministerio de Ciencia, Innovación y Universidades](https://www.ciencia.gob.es/): This work is funded by the Spanish Ministry of Science, Innovation and Universities alongside the [Agencia Estatal de Investigación (AEI)](https://www.aei.gob.es/en) and co-funded by the [European Union](https://european-union.europa.eu/).
