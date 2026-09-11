@@ -40,7 +40,7 @@ gauge network, or set of products.
 - **Produces an application-weighted decision matrix** ranking products
   across seven conservation and water-management applications, per zone.
 
-## Headline findings
+## Main findings
 
 - **GPM IMERG and CHIRPS consistently outperform** the other products
   across most zones and metrics.
