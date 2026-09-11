@@ -22,7 +22,7 @@
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../assets/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
@@ -96,8 +96,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="WA Precipitation Product Assessment" class="md-header__button md-logo" aria-label="WA Precipitation Product Assessment" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../assets/favicon.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -237,8 +236,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="WA Precipitation Product Assessment" class="md-nav__button md-logo" aria-label="WA Precipitation Product Assessment" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../assets/favicon.png" alt="logo">
 
     </a>
     WA Precipitation Product Assessment
@@ -668,7 +666,7 @@
 a fixed order for this specific dataset — the package is a maintained,
 versioned library you can call on any region.</p>
 <p>Install:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;savana[rainfall]&quot;</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"savana[rainfall]"</span>
 </code></pre></div>
 <h2 id="one-call-entry-point">One-call entry point<a class="headerlink" href="#one-call-entry-point" title="Permanent link">&para;</a></h2>
 <p><strong><code>validate_against_gpcc(...)</code></strong> runs the entire assessment and returns a
@@ -680,15 +678,15 @@ versioned library you can call on any region.</p>
     <span class="n">products</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>              <span class="c1"># None = all 6; or a subset</span>
     <span class="n">start_year</span><span class="o">=</span><span class="mi">2001</span><span class="p">,</span>
     <span class="n">end_year</span><span class="o">=</span><span class="mi">2020</span><span class="p">,</span>
-    <span class="n">obs_source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>            <span class="c1"># &quot;download&quot; (any coords) or &quot;ee_asset&quot;</span>
-    <span class="n">cache_dir</span><span class="o">=</span><span class="s2">&quot;savana_rainfall_data&quot;</span><span class="p">,</span>
+    <span class="n">obs_source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>            <span class="c1"># "download" (any coords) or "ee_asset"</span>
+    <span class="n">cache_dir</span><span class="o">=</span><span class="s2">"savana_rainfall_data"</span><span class="p">,</span>
     <span class="n">zones_gdf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">zones_fc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">rain_threshold</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">,</span>
+    <span class="n">ee_project</span><span class="o">=</span><span class="s2">"your-gcp-project-id"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summarize</span><span class="p">())</span>
-<span class="n">result</span><span class="o">.</span><span class="n">export_workbook</span><span class="p">(</span><span class="s2">&quot;decision_tool.xlsx&quot;</span><span class="p">)</span>
+<span class="n">result</span><span class="o">.</span><span class="n">export_workbook</span><span class="p">(</span><span class="s2">"decision_tool.xlsx"</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="the-assessment-object">The assessment object<a class="headerlink" href="#the-assessment-object" title="Permanent link">&para;</a></h2>
 <p><strong><code>RainfallAssessment(...)</code></strong> is the step-by-step, chainable form. Its
@@ -745,13 +743,13 @@ stages mirror this repository's pipeline one-to-one:</p>
 </table>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">savana.rainfall</span><span class="w"> </span><span class="kn">import</span> <span class="n">RainfallAssessment</span>
 
-<span class="n">ra</span> <span class="o">=</span> <span class="n">RainfallAssessment</span><span class="p">(</span><span class="n">stations</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">),</span> <span class="n">ee_project</span><span class="o">=</span><span class="s2">&quot;your-gcp-project-id&quot;</span><span class="p">)</span>
-<span class="n">ra</span><span class="o">.</span><span class="n">ingest</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s2">&quot;2020-01-01&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;2020-12-31&quot;</span><span class="p">)</span>
-<span class="n">ra</span><span class="o">.</span><span class="n">get_observations</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s2">&quot;download&quot;</span><span class="p">)</span>
+<span class="n">ra</span> <span class="o">=</span> <span class="n">RainfallAssessment</span><span class="p">(</span><span class="n">stations</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">),</span> <span class="n">ee_project</span><span class="o">=</span><span class="s2">"your-gcp-project-id"</span><span class="p">)</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">ingest</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s2">"2020-01-01"</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">"2020-12-31"</span><span class="p">)</span>
+<span class="n">ra</span><span class="o">.</span><span class="n">get_observations</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s2">"download"</span><span class="p">)</span>
 <span class="n">ra</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
 <span class="n">ra</span><span class="o">.</span><span class="n">compare_table</span><span class="p">()</span>          <span class="c1"># obs vs every product, side by side</span>
 <span class="n">ra</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span><span class="o">.</span><span class="n">score</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ra</span><span class="o">.</span><span class="n">answer</span><span class="p">(</span><span class="s2">&quot;which product is best for drought early warning?&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ra</span><span class="o">.</span><span class="n">answer</span><span class="p">(</span><span class="s2">"which product is best for drought early warning?"</span><span class="p">))</span>
 </code></pre></div>
 <h2 id="full-reference">Full reference<a class="headerlink" href="#full-reference" title="Permanent link">&para;</a></h2>
 <p>The complete, auto-generated API reference (every function, class, and
